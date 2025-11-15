@@ -1,0 +1,157 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath, amssymb}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+\tcbset{colback=white}
+
+\newcommand{\EE}{E\overline{E}}
+
+\begin{document}
+
+\section*{Solving \texorpdfstring{$aE\overline{E} + b\overline{E} + c = 0$}{aE E* + bE* + c = 0}}
+
+We want to determine, for which triples $(a,b,c)\in\mathbb{C}^3$, the equation
+\[
+a\,E\overline{E} \;+\; b\,\overline{E} \;+\; c \;=\; 0
+\]
+admits a solution $E\in\mathbb{C}$.
+
+% ------------------------------------------------------------
+\subsection*{The case \texorpdfstring{$a=0$}{a=0}}
+
+When $a=0$, the equation reduces to
+\[
+b\,\overline{E} + c = 0.
+\]
+
+\begin{tcolorbox}
+\[
+\text{If } b\neq 0, \qquad
+\overline{E} = -\frac{c}{b}
+\quad\Longrightarrow\quad
+E = -\overline{\frac{c}{b}}.
+\]
+So a solution always exists, for every $c\in\mathbb{C}$.
+\end{tcolorbox}
+
+\smallskip
+
+\begin{tcolorbox}
+If $b = 0$, then the equation is simply $c=0$.
+
+\begin{itemize}
+    \item If $b=0$ and $c=0$: every $E$ is a solution.
+    \item If $b=0$ and $c\neq 0$: no solution exists.
+\end{itemize}
+\end{tcolorbox}
+
+Thus for $a=0$, a solution exists unless
+\[
+(b,c) = (0,c\neq 0).
+\]
+
+\bigskip
+
+% ------------------------------------------------------------
+\subsection*{From now on, assume \texorpdfstring{$a\neq 0$}{a ≠ 0}}
+
+We divide the original equation by $a$ and define
+\[
+b' = \frac{b}{a},
+\qquad
+c' = \frac{c}{a},
+\]
+so the equation becomes
+\[
+E\overline{E} + b'\,\overline{E} + c' = 0.
+\]
+
+\begin{tcolorbox}
+Rewrite as
+\[
+c' = -\,\EE + b'\,\overline{E}.
+\]
+\end{tcolorbox}
+
+Let us decompose $E$ into magnitude and direction:
+\[
+E = E_{\text{size}}\,E_{\text{dir}},
+\qquad
+|E_{\text{dir}}|=1.
+\]
+Then
+\[
+c' = -\,E_{\text{size}}^2 \;+\; b' E_{\text{size}}\,\overline{E_{\text{dir}}}.
+\]
+
+\smallskip
+
+For fixed $E_{\text{size}}$, varying $E_{\text{dir}}$ traces out a circle in the complex plane.  
+Write
+\[
+b' = b_\Sigma\,e^{i\theta}, \qquad b_\Sigma = |b'|,
+\]
+and rotate coordinates so that the circle lies on the real axis.  
+Then $c' = c_x + i c_y$ satisfies
+\[
+(c_x + c_\Sigma)^2 + c_y^2 = (b_\Sigma E_{\text{size}})^2,
+\]
+where $c_\Sigma$ is a real shift.
+
+\bigskip
+
+% ------------------------------------------------------------
+\subsection*{Finding the envelope of these circles}
+
+Define
+\[
+F(c_x,c_y,z)
+  = (c_x + c_\Sigma)^2 + c_y^2 - (b_\Sigma z)^2.
+\]
+The envelope of the family is obtained from
+\[
+F = 0,
+\qquad
+\frac{\partial F}{\partial z} = 0.
+\]
+We have
+\[
+\frac{\partial F}{\partial z}
+  = -2 b_\Sigma^2\, z,
+\]
+so the envelope occurs where $z = E_{\text{size}} = 0$.
+
+Substituting $z=0$ into $F=0$ gives
+\[
+(c_x + c_\Sigma)^2 + c_y^2 = 0.
+\]
+
+Undoing the coordinate shifts and simplifications yields the envelope curve
+\[
+c_y^2
+  = -\,c_x\!\left(c_x^2 + \frac{b_\Sigma^2}{4}\right),
+\qquad
+c_x \le 0.
+\]
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{../a-complex-equation-envelope.png}
+\end{figure}
+
+\begin{tcolorbox}
+\[
+\boxed{
+\begin{array}{c}
+\text{The set of } c' \text{ for which a solution } E \text{ exists} \\
+\text{is the interior of this envelope.}
+\end{array}
+}
+\]
+\end{tcolorbox}
+
+Translating back to $c = a c'$ determines all triples $(a,b,c)$ for which a solution exists.
+
+\end{document}
