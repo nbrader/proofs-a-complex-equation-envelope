@@ -1,0 +1,17 @@
+(lang dune 3.8)
+(using coq 0.8)
+(name coq-complex-envelope)
+
+(generate_opam_files true)
+
+(source (github nbrader/proofs-a-complex-equation-envelope))
+(license MIT)
+(authors "Nicholas Brader")
+(maintainers "Nicholas Brader")
+
+(package
+ (name coq-complex-envelope)
+ (synopsis "Rocq formalization of complex equation envelope proof")
+ (description "This package formalizes the proof of conditions under which the equation a·E·Ē + b·Ē + c = 0 has solutions for E ∈ ℂ, where Ē denotes the complex conjugate of E.")
+ (depends
+  (coq (>= 8.16))))
