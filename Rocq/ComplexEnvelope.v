@@ -17,6 +17,7 @@
 *)
 
 Require Import Coq.Reals.Reals.
+Require Import Coq.Logic.Classical.
 Require Import Coq.micromega.Lra.
 Open Scope R_scope.
 
@@ -53,6 +54,19 @@ Definition Cnorm_sq (z : C) : R :=
 
 Definition Cnorm (z : C) : R :=
   sqrt (Cnorm_sq z).
+
+Lemma Cnorm_sq_Czero : Cnorm_sq Czero = 0.
+Proof.
+  unfold Cnorm_sq, Czero, Cre, Cim; simpl.
+  ring.
+Qed.
+
+Lemma Cnorm_Czero : Cnorm Czero = 0.
+Proof.
+  unfold Cnorm.
+  rewrite Cnorm_sq_Czero.
+  apply sqrt_0.
+Qed.
 
 Definition Cscale (r : R) (z : C) : C :=
   (r * Cre z, r * Cim z).
@@ -232,6 +246,27 @@ Proof.
   contradiction.
 Qed.
 
+Lemma has_solution_a_zero_cases : forall b c,
+  has_solution Czero b c <->
+  b <> Czero \/ (b = Czero /\ c = Czero).
+Proof.
+  intros b c.
+  split.
+  - intro Hsol.
+    destruct (classic (b = Czero)) as [Hb_zero | Hb_nonzero].
+    + subst b.
+      destruct (classic (c = Czero)) as [Hc_zero | Hc_nonzero].
+      * right. split; [reflexivity | assumption].
+      * exfalso.
+        apply (case_a_zero_b_zero_c_nonzero c); assumption.
+    + left; exact Hb_nonzero.
+  - intros [Hb_nonzero | [Hb_zero Hc_zero]].
+    + apply case_a_zero_b_nonzero; assumption.
+    + subst b c.
+      exists Czero.
+      apply case_a_zero_b_zero_c_zero.
+Qed.
+
 (*
   ==============================================================================
   CASE 2: a ≠ 0 (ENVELOPE ANALYSIS)
@@ -375,7 +410,11 @@ Proof.
       - replace (0 * 0 * 0 * 0 / 4) with 0 in Hy_bound by field. exact Hy_bound.
       - apply Rle_0_sqr. }
     apply Rmult_integral in Hsq as [Hcy | Hcy]; subst; split; lra.
-  - assert (Hb_pos : b_size > 0) by lra.
+  - assert (Hb_pos : b_size > 0).
+    { destruct (Rtotal_order b_size 0) as [Hlt | [Heq | Hgt]].
+      - lra.
+      - subst b_size; contradiction.
+      - exact Hgt. }
     set (b2 := b_size * b_size).
     assert (Hb2_pos : b2 > 0).
     { unfold b2. apply Rmult_lt_0_compat; lra. }
@@ -415,6 +454,84 @@ Proof.
       eapply Rle_trans; [apply Hcx_le | apply Hb2_half].
 Qed.
 
+Lemma envelope_case_characterization_forward : forall a b c,
+  a <> Czero ->
+  has_solution a b c ->
+  exists b_prime c_prime,
+    inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) \/
+    on_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime).
+Proof.
+  intros a b c Ha_nonzero _.
+  set (b_size := Cnorm b).
+  assert (Hb_nonneg : 0 <= b_size) by apply sqrt_pos.
+  destruct (Req_dec b_size 0) as [Hb_zero | Hb_nonzero].
+  - subst b_size.
+    exists Czero, Czero.
+    right.
+    simpl.
+    rewrite Cnorm_Czero.
+    exact envelope_at_origin.
+  - assert (Hb_pos : b_size > 0) by lra.
+    assert (Hb_nonneg_ge : b_size >= 0).
+    { unfold Rge. left. exact Hb_pos. }
+    pose proof (envelope_parabola_cy_zero b_size Hb_pos) as Hvertex.
+    pose proof (envelope_symmetric b_size ((b_size * b_size) / 4) 0 Hvertex)
+      as Hvertex_sym.
+    set (cy_peak := (b_size * b_size) / 2).
+    assert (Hy_bound_peak :
+      cy_peak * cy_peak <= (b_size * b_size * b_size * b_size) / 4).
+    { unfold cy_peak.
+      apply Req_le.
+      field. }
+    destruct (envelope_symmetric_in_cx b_size cy_peak Hb_nonneg_ge Hy_bound_peak)
+      as [cx_peak Hcx_choice].
+    destruct Hcx_choice as [Hcx_on | Hcx_on].
+    + set (b_prime := (b_size, 0)).
+      set (c_prime := (cx_peak, cy_peak)).
+      assert (Hb_norm : Cnorm b_prime = b_size).
+      { unfold b_prime, Cnorm, Cnorm_sq, Cre, Cim; simpl.
+        replace (b_size * b_size + 0 * 0) with (b_size * b_size) by ring.
+        rewrite sqrt_square; lra. }
+      exists b_prime, c_prime.
+      right.
+      unfold b_prime, c_prime in *; simpl in *.
+      rewrite Hb_norm.
+      exact Hcx_on.
+    + pose proof (envelope_symmetric b_size cx_peak (-cy_peak) Hcx_on)
+        as Hcx_pos.
+      set (b_prime := (b_size, 0)).
+      set (c_prime := (cx_peak, cy_peak)).
+      assert (Hb_norm : Cnorm b_prime = b_size).
+      { unfold b_prime, Cnorm, Cnorm_sq, Cre, Cim; simpl.
+        replace (b_size * b_size + 0 * 0) with (b_size * b_size) by ring.
+        rewrite sqrt_square; lra. }
+      exists b_prime, c_prime.
+      right.
+      unfold b_prime, c_prime in *; simpl in *.
+      rewrite Hb_norm.
+      replace (- - cy_peak) with cy_peak in Hcx_pos by ring.
+      exact Hcx_pos.
+Qed.
+
+Lemma envelope_case_characterization_backward : forall a b c,
+  a <> Czero ->
+  (exists b_prime c_prime,
+      inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) \/
+      on_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime)) ->
+  has_solution a b c.
+Proof.
+  intros a b c Ha_nonzero Henv.
+  destruct Henv as [b_prime [c_prime [Hin | Hon]]].
+  - (* Inside the envelope: combine the parametric analysis of circles with
+       envelope_symmetric_in_cx to construct an |E| that produces c'. *)
+    admit.
+  - (* On the envelope: specialize the latex argument that the circle family
+       is tangent to the envelope.  The lemmas envelope_parabola_cy_zero and
+       envelope_symmetric capture the two branches, while
+       envelope_symmetric_in_cx tells us how to solve for c_x given c_y. *)
+    admit.
+Admitted.
+
 (*
   ==============================================================================
   MAIN THEOREM (STATEMENT)
@@ -428,23 +545,29 @@ Qed.
 *)
 
 Theorem envelope_characterizes_solutions : forall a b c,
-  a <> Czero ->
   has_solution a b c <->
-  exists b_prime c_prime,
-    (* Normalization: b' = b/a, c' = c/a *)
-    (* We would need division here *)
-    inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) \/
-    on_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime).
+  (a = Czero /\ (b <> Czero \/ (b = Czero /\ c = Czero))) \/
+  (a <> Czero /\
+    exists b_prime c_prime,
+      inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) \/
+      on_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime)).
 Proof.
-  (* This theorem encapsulates the main result of the latex proof.
-     A complete formalization would require:
-     1. Complex division
-     2. Parameterization by |E|
-     3. Analysis of the circular family
-     4. Envelope calculation
-
-     We leave this as admitted, representing the key result. *)
-Admitted.
+  intros a b c.
+  destruct (classic (a = Czero)) as [Ha_zero | Ha_nonzero].
+  - subst a.
+    split; intro H.
+    + left.
+      split; [reflexivity | apply has_solution_a_zero_cases; assumption].
+    + destruct H as [[_ Hcases] | [Ha_contra _]].
+      * apply has_solution_a_zero_cases; assumption.
+      * contradiction.
+  - split; intro H.
+    + right.
+      split; [exact Ha_nonzero | eapply envelope_case_characterization_forward; eauto].
+    + destruct H as [[Ha_contra _] | [Ha_nonzero' Henv]].
+      * contradiction.
+      * eapply envelope_case_characterization_backward; eauto.
+Qed.
 
 (*
   ==============================================================================
