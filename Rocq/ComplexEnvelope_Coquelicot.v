@@ -270,6 +270,31 @@ Qed.
   With x² + y² = z², this is a circle-line intersection problem.
 *)
 
+(*
+  Helper lemmas for the geometric construction
+*)
+
+Lemma envelope_implies_discriminant_nonneg : forall b_norm cr ci z,
+  b_norm <> 0 ->
+  z * z = (b_norm * b_norm) / 2 - cr ->
+  ci * ci = (b_norm * b_norm * b_norm * b_norm) / 4 - (b_norm * b_norm) * cr ->
+  (b_norm * b_norm) * z * z - ci * ci = (b_norm * b_norm * b_norm * b_norm) / 4.
+Proof.
+  intros b_norm cr ci z Hb_nonzero Hz_sq Henv_eq.
+
+  (* Expand b²·z² *)
+  rewrite Hz_sq.
+
+  (* b²·z² = b²·(b²/2 - cr) = b⁴/2 - b²·cr *)
+  replace ((b_norm * b_norm) * ((b_norm * b_norm) / 2 - cr))
+    with ((b_norm * b_norm * b_norm * b_norm) / 2 - (b_norm * b_norm) * cr)
+    by (field; lra).
+
+  (* b²·z² - ci² = (b⁴/2 - b²·cr) - (b⁴/4 - b²·cr) = b⁴/4 *)
+  rewrite Henv_eq.
+  field.
+Qed.
+
 Lemma construct_E_from_envelope_point : forall b_prime c_prime,
   Cmod b_prime <> 0 ->
   on_envelope (Cmod b_prime) (Re c_prime) (Im c_prime) ->
@@ -282,108 +307,202 @@ Proof.
   set (bi := Im b_prime).
   set (cr := Re c_prime).
   set (ci := Im c_prime).
+  set (b_norm := Cmod b_prime).
 
   (* Compute z from envelope condition *)
-  destruct (compute_z_from_envelope (Cmod b_prime) cr ci Hon Hb_nonzero)
+  destruct (compute_z_from_envelope b_norm cr ci Hon Hb_nonzero)
     as [z [Hz_nonneg Hz_sq]].
 
-  (* We need to find (x, y) with x² + y² = z² and bi·x - br·y = -ci *)
-
-  (* Case analysis on whether br = 0 and bi = 0 *)
-  (* But we know b' ≠ 0, so at least one is nonzero *)
-
-  assert (Hb_sq : br * br + bi * bi <> 0).
+  (* We know b_norm² = br² + bi² *)
+  assert (Hb_norm_sq : b_norm * b_norm = br * br + bi * bi).
   {
+    unfold b_norm, Cmod. rewrite Rsqr_sqrt.
+    - unfold br, bi. destruct b_prime. simpl. ring.
+    - apply Rplus_le_le_0_compat; apply Rle_0_sqr.
+  }
+
+  (* At least one of br, bi is nonzero *)
+  assert (Hb_sq_nonzero : br * br + bi * bi <> 0).
+  {
+    rewrite <- Hb_norm_sq.
     intro Hcontra.
-    assert (Hmod_sq : Cmod b_prime * Cmod b_prime = br * br + bi * bi).
-    {
-      unfold Cmod. rewrite Rsqr_sqrt.
-      - unfold br, bi. destruct b_prime. simpl. ring.
-      - apply Rplus_le_le_0_compat; apply Rle_0_sqr.
-    }
-    rewrite Hcontra in Hmod_sq.
-    assert (Hmod_zero : Cmod b_prime = 0).
-    {
-      apply Rmult_integral in Hmod_sq as [H | H]; assumption.
-    }
-    lra.
+    apply Rmult_integral in Hcontra as [H | H]; lra.
   }
 
-  (* Solve the system using the parametrization:
-     From bi·x - br·y = -ci, we can express y in terms of x (if br ≠ 0)
-     or x in terms of y (if bi ≠ 0).
+  (* Case split: br = 0 or br ≠ 0 *)
+  destruct (Req_dec br 0) as [Hbr_zero | Hbr_nonzero].
 
-     Then substitute into x² + y² = z² to get a quadratic.
+  - (* Case: br = 0, so bi ≠ 0 *)
+    subst br.
+    assert (Hbi_nonzero : bi <> 0).
+    {
+      intro Hcontra. subst bi.
+      simpl in Hb_sq_nonzero.
+      replace (0 * 0 + 0 * 0) with 0 in Hb_sq_nonzero by ring.
+      contradiction.
+    }
 
-     The discriminant is guaranteed to be non-negative by the envelope condition.
+    (* From imaginary constraint: bi·x - 0·y = -ci, so x = -ci/bi *)
+    set (x := - ci / bi).
 
-     For a complete constructive proof, we'd need to:
-     1. Case split on br = 0 vs br ≠ 0
-     2. Solve the quadratic explicitly
-     3. Use IVT or constructive methods to extract roots
+    (* From circle constraint: x² + y² = z², so y² = z² - x² *)
+    set (y_sq := z * z - x * x).
 
-     For now, we use classical reasoning to assert existence.
-  *)
+    (* We need to show y_sq ≥ 0 *)
+    (* This follows from the envelope condition *)
+    assert (Hy_sq_nonneg : y_sq >= 0).
+    {
+      unfold y_sq, x.
+      destruct Hon as [Henv_eq _].
 
-  (* Use classical existence: the envelope equation guarantees
-     that the circle (x² + y² = z²) and line (bi·x - br·y = -ci)
-     intersect. *)
+      (* From envelope equation with br = 0 *)
+      replace (0 * 0 + bi * bi) with (bi * bi) in Hb_norm_sq by ring.
 
-  assert (Hexists : exists x y : R,
-    x * x + y * y = z * z /\
-    bi * x - br * y = - ci).
-  {
-    (* This would require a complete development of circle-line intersection.
-       With Coquelicot + additional geometric reasoning, this is provable.
+      (* Use envelope_implies_discriminant_nonneg *)
+      assert (Hdisc : (bi * bi) * z * z - ci * ci =
+                      (bi * bi * bi * bi) / 4).
+      {
+        apply envelope_implies_discriminant_nonneg with (cr := cr).
+        - unfold bi. intro Hcontra.
+          assert (Hbi_eq : bi = 0 \/ bi = 0).
+          { destruct (Rmult_integral _ _ Hcontra); auto. }
+          destruct Hbi_eq; contradiction.
+        - rewrite <- Hb_norm_sq. simpl. exact Hz_sq.
+        - rewrite <- Hb_norm_sq. simpl. exact Henv_eq.
+      }
 
-       The envelope condition c_y² = b⁴/4 - b²·c_x with z² = b²/2 - c_x
-       implies that:
+      (* Now y² = z² - ci²/bi² = (bi²·z² - ci²)/bi² = b⁴/4 / bi² ≥ 0 *)
+      replace (z * z - (- ci / bi) * (- ci / bi))
+        with ((bi * bi * z * z - ci * ci) / (bi * bi))
+        by (field; lra).
 
-       c_y² = b²·z² - z⁴
+      rewrite Hdisc.
+      apply Rmult_le_pos.
+      + apply Rmult_le_pos; [| apply Rlt_le, Rinv_0_lt_compat].
+        * apply Rmult_le_pos; apply Rle_0_sqr.
+        * apply Rmult_lt_0_compat; lra.
+      + apply Rlt_le, Rinv_0_lt_compat.
+        apply Rmult_lt_0_compat; lra.
+    }
 
-       This is exactly the condition that ensures the line intersects the circle.
+    set (y := sqrt y_sq).
 
-       For a complete proof, we'd invoke a circle-line intersection lemma.
-    *)
-    admit.
-  }
+    exists (x, y).
 
-  destruct Hexists as [x [y [Hcircle Hline]]].
+    unfold equation, C1, Cmult, Cplus, Cconj, C0.
+    simpl.
 
-  exists (x, y).
+    (* We need to verify both real and imaginary parts equal 0 *)
+    f_equal.
 
-  unfold equation.
+    + (* Real part: x² + y² + 0·x - bi·y + cr = 0 *)
+      (* We have x² + y² = z² from definition of y *)
+      unfold y, y_sq, x, br, bi, cr, ci, b_norm, z.
+      destruct b_prime, c_prime. simpl in *.
+      unfold bi in *. simpl in *.
 
-  (* Verify the equation holds *)
-  (* E·Ē + b'·Ē + c' = 0 *)
-  (* (x,y)·(x,-y) + (br,bi)·(x,-y) + (cr,ci) = 0 *)
+      (* y² = z² - x² by definition, so x² + y² = z² *)
+      rewrite Rsqr_sqrt; [| lra].
 
-  unfold C1, Cmult, Cplus, Cconj, C0.
-  simpl.
+      (* Now need: z² - bi·√(z² - x²) + cr = 0 *)
+      (* This should follow from the envelope condition *)
+      (* But the specific choice of sign for y matters *)
+      admit.
 
-  (* Real part: x² + y² + br·x + bi·(-y) + cr = 0 *)
-  (* Imaginary part: 0 + bi·x - br·y + ci = 0 *)
+    + (* Imaginary part: 0 + bi·x - 0·y + ci = 0 *)
+      unfold x, br, bi, ci. destruct b_prime, c_prime. simpl in *.
+      unfold bi, ci in *. simpl in *.
+      field. assumption.
 
-  f_equal.
-  - (* Real part *)
-    unfold br, bi, cr. destruct b_prime as [br' bi']. destruct c_prime as [cr' ci'].
-    simpl in *.
-    unfold br, bi, cr in *. simpl in *.
+  - (* Case: br ≠ 0 *)
+    (* Use quadratic formula *)
+    (* From bi·x - br·y = -ci, we get y = (bi·x + ci)/br *)
+    (* Substitute into x² + y² = z²: *)
+    (* x² + ((bi·x + ci)/br)² = z² *)
+    (* (br² + bi²)·x² + 2·bi·ci·x + (ci² - br²·z²) = 0 *)
 
-    (* From envelope: z² + br·x - bi·y + cr = 0 should follow *)
-    (* We have z² = x² + y² from Hcircle *)
-    (* Need to show: x² + y² + br·x - bi·y + cr = 0 *)
+    set (A := br * br + bi * bi).
+    set (B := 2 * bi * ci).
+    set (C := ci * ci - br * br * z * z).
 
-    (* This follows from the envelope tangency condition *)
-    admit.
+    (* Discriminant *)
+    set (Delta := B * B - 4 * A * C).
 
-  - (* Imaginary part *)
-    unfold bi, br, ci. destruct b_prime as [br' bi']. destruct c_prime as [cr' ci'].
-    simpl in *.
-    unfold bi, br, ci in *. simpl in *.
+    (* Key: Δ = 4·br²·b⁴/4 = br²·b⁴ ≥ 0 *)
+    assert (HDelta_eq : Delta = br * br * A * A).
+    {
+      unfold Delta, A, B, C.
+      destruct Hon as [Henv_eq _].
 
-    (* Directly from Hline: bi·x - br·y = -ci *)
-    lra.
+      (* Use envelope condition *)
+      assert (Hdisc : (br * br + bi * bi) * z * z - ci * ci =
+                      ((br * br + bi * bi) * (br * br + bi * bi)) / 4).
+      {
+        apply envelope_implies_discriminant_nonneg with (cr := cr).
+        - rewrite <- Hb_norm_sq in Hb_sq_nonzero.
+          intro Hcontra.
+          apply Hb_sq_nonzero.
+          destruct (Rmult_integral _ _ Hcontra); assumption.
+        - rewrite <- Hb_norm_sq. exact Hz_sq.
+        - rewrite <- Hb_norm_sq. exact Henv_eq.
+      }
+
+      (* Expand discriminant *)
+      replace (B * B - 4 * A * C) with
+        (4 * bi * bi * ci * ci - 4 * (br * br + bi * bi) * (ci * ci - br * br * z * z))
+        by (unfold B, C, A; ring).
+
+      (* Simplify using Hdisc *)
+      rewrite Hdisc.
+      unfold A.
+      ring.
+    }
+
+    assert (HDelta_nonneg : Delta >= 0).
+    {
+      rewrite HDelta_eq.
+      apply Rmult_le_pos; apply Rle_0_sqr.
+    }
+
+    (* Take sqrt of Delta *)
+    set (sqrt_Delta := sqrt Delta).
+
+    assert (Hsqrt_Delta_sq : sqrt_Delta * sqrt_Delta = Delta).
+    {
+      unfold sqrt_Delta.
+      rewrite Rsqr_sqrt; [reflexivity | lra].
+    }
+
+    (* Solution: x = (-B + √Δ) / (2A) *)
+    set (x := (- B + sqrt_Delta) / (2 * A)).
+
+    (* And: y = (bi·x + ci) / br *)
+    set (y := (bi * x + ci) / br).
+
+    exists (x, y).
+
+    unfold equation, C1, Cmult, Cplus, Cconj, C0.
+    simpl.
+
+    f_equal.
+
+    + (* Real part: x² + y² + br·x - bi·y + cr = 0 *)
+      unfold y, x, A, B, C, Delta, sqrt_Delta, br, bi, cr, ci, b_norm, z.
+      destruct b_prime, c_prime. simpl in *.
+
+      (* x satisfies the quadratic A·x² + B·x + C = 0 *)
+      (* which means (br² + bi²)·x² + 2·bi·ci·x + (ci² - br²·z²) = 0 *)
+      (* From this and y = (bi·x + ci)/br, we get x² + y² = z² *)
+      (* Then the envelope condition z² + cr = b²/2 should give us the result *)
+
+      (* This is a tedious but straightforward algebraic verification *)
+      (* For now, we admit this final step *)
+      admit.
+
+    + (* Imaginary part: bi·x - br·y + ci = 0 *)
+      unfold y.
+      field.
+      assumption.
 Admitted.
 
 (*
