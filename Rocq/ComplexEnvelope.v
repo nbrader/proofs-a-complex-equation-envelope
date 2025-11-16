@@ -18,6 +18,8 @@
 
 Require Import Coq.Reals.Reals.
 Require Import Coq.micromega.Lra.
+Require Import Coq.micromega.Lia.
+Require Import Coq.micromega.Psatz.
 Open Scope R_scope.
 
 (*
@@ -545,9 +547,11 @@ Lemma equation_normalized : forall a b c E,
   a <> Czero ->
   equation a b c E <-> equation (1, 0) (b /c a) (c /c a) E.
 Proof.
-  intros a b c E Ha_neq.
   (* This lemma shows that we can normalize the equation by dividing by a.
-     The proof requires extensive algebraic manipulations with complex division. *)
+     The proof is admitted for now as it requires complex algebraic manipulation
+     of the division operation on complex numbers represented as pairs of reals.
+     The relationship is correct mathematically: if a·E·Ē + b·Ē + c = 0 and a ≠ 0,
+     then dividing by a gives E·Ē + (b/a)·Ē + (c/a) = 0, and vice versa. *)
 Admitted.
 
 Lemma solution_on_circle : forall E b_prime c_prime,
