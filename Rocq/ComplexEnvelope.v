@@ -17,7 +17,6 @@
 *)
 
 Require Import Coq.Reals.Reals.
-Require Import Coq.Reals.R_sqrt.
 Require Import Coq.micromega.Lra.
 Open Scope R_scope.
 
@@ -324,8 +323,57 @@ Lemma envelope_symmetric_in_cx : forall b_size c_y,
   exists c_x,
     on_envelope b_size c_x c_y \/ on_envelope b_size c_x (-c_y).
 Proof.
-  (* This shows that for any c_y in range, there exists a c_x on the envelope *)
-Admitted.
+  intros b_size c_y Hb_nonneg Hy_bound.
+  destruct (Req_dec b_size 0) as [Hb_zero | Hb_nonzero].
+  - subst b_size.
+    simpl in Hy_bound.
+    exists 0.
+    left.
+    unfold on_envelope; simpl in *.
+    assert (Hsq : c_y * c_y = 0).
+    { apply Rle_antisym.
+      - replace (0 * 0 * 0 * 0 / 4) with 0 in Hy_bound by field. exact Hy_bound.
+      - apply Rle_0_sqr. }
+    apply Rmult_integral in Hsq as [Hcy | Hcy]; subst; split; lra.
+  - assert (Hb_pos : b_size > 0) by lra.
+    set (b2 := b_size * b_size).
+    assert (Hb2_pos : b2 > 0).
+    { unfold b2. apply Rmult_lt_0_compat; lra. }
+    assert (Hb2_neq : b2 <> 0) by lra.
+    set (c_x := (b2 / 4) - (c_y * c_y) / b2).
+    exists c_x.
+    left.
+    unfold on_envelope.
+    split.
+    + replace (b_size * b_size * b_size * b_size) with (b2 * b2) by (unfold b2; ring).
+      replace (b_size * b_size) with b2 by (unfold b2; ring).
+      unfold c_x; unfold Rdiv.
+      rewrite Rmult_minus_distr_l.
+      assert (Hbpart : b2 * (b2 * / 4) = (b2 * b2) * / 4).
+      { rewrite <- Rmult_assoc. reflexivity. }
+      rewrite Hbpart.
+      assert (Hcancel : b2 * ((c_y * c_y) * / b2) = c_y * c_y).
+      { rewrite Rmult_assoc.
+        field.
+        apply Hb2_neq. }
+      rewrite Hcancel.
+      assert (Hminus : forall u v : R, v - (v - u) = u) by (intros; lra).
+      rewrite (Hminus (c_y * c_y) ((b2 * b2) * / 4)).
+      reflexivity.
+    + assert (Hnonneg : 0 <= (c_y * c_y) * / b2).
+      { apply Rmult_le_pos.
+        - apply Rle_0_sqr.
+        - apply Rlt_le, Rinv_0_lt_compat; exact Hb2_pos. }
+      assert (Hcx_le : c_x <= b2 / 4).
+      {
+        unfold c_x; unfold Rdiv.
+        set (delta := (c_y * c_y) * / b2) in *.
+        change (b2 * / 4 - delta <= b2 * / 4).
+        lra.
+      }
+      assert (Hb2_half : b2 / 4 <= b2 / 2) by lra.
+      eapply Rle_trans; [apply Hcx_le | apply Hb2_half].
+Qed.
 
 (*
   ==============================================================================
