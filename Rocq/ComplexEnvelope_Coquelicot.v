@@ -35,7 +35,7 @@ Open Scope R_scope.
   - Cconj (conjugate)
   - Cmod (modulus/norm)
   - Re, Im (real and imaginary parts)
-  - C0 = (0, 0), C1 = (1, 0)
+  - 0 = (0, 0), 1 = (1, 0)
   - Ci = (0, 1) (imaginary unit)
 
   Notation:
@@ -58,7 +58,7 @@ Local Open Scope C_scope.
 *)
 
 Definition equation (a b c E : C) : Prop :=
-  (a * E * Cconj E) + (b * Cconj E) + c = C0.
+  (a * E * Cconj E) + (b * Cconj E) + c = 0.
 
 (*
   A solution exists if there is some E satisfying the equation.
@@ -78,9 +78,9 @@ Definition has_solution (a b c : C) : Prop :=
   These proofs are direct ports from the original file.
 *)
 
-Theorem case_a_zero_b_nonzero : forall b c,
-  b <> C0 ->
-  has_solution C0 b c.
+Theorem case_a_zero_b_nonzero : forall b c : C,
+  b <> 0 ->
+  has_solution 0 b c.
 Proof.
   intros b c Hb_neq.
   unfold has_solution.
@@ -90,14 +90,14 @@ Proof.
   exists (Cconj (Copp c / b)).
 
   unfold equation.
-  (* Simplify: C0 * E * Cconj E = C0 *)
-  replace (C0 * Cconj (Cconj (Copp c / b)) * Cconj (Cconj (Copp c / b)))
-    with C0.
-  2:{ rewrite Cmult_0_l. reflexivity. }
+  (* Simplify: 0 * E * Cconj E = 0 *)
+  replace (0 * Cconj (Cconj (Copp c / b)) * Cconj (Cconj (Copp c / b)))
+    with (0:C).
+  2:{ ring. }
 
-  (* Now we need: b * Cconj E + c = C0 *)
+  (* Now we need: b * Cconj E + c = 0 *)
   (* E = Cconj(- c / b), so Cconj E = Cconj(Cconj(-c/b)) = -c/b *)
-  rewrite Cconj_involutive.
+  rewrite Cconj_conj.
 
   (* b * (-c/b) + c = -c + c = 0 *)
   field.
@@ -105,7 +105,7 @@ Proof.
 Qed.
 
 Theorem case_a_zero_b_zero_c_zero :
-  forall E : C, equation C0 C0 C0 E.
+  forall E : C, equation 0 0 0 E.
 Proof.
   intro E.
   unfold equation.
@@ -114,9 +114,9 @@ Proof.
   reflexivity.
 Qed.
 
-Theorem case_a_zero_b_zero_c_nonzero : forall c,
-  c <> C0 ->
-  ~ has_solution C0 C0 c.
+Theorem case_a_zero_b_zero_c_nonzero : forall c : C,
+  c <> 0 ->
+  ~ has_solution 0 0 c.
 Proof.
   intros c Hc_neq.
   unfold has_solution, equation.
@@ -127,20 +127,21 @@ Proof.
   repeat rewrite Cmult_0_l in Heq.
   repeat rewrite Cplus_0_l in Heq.
 
-  (* This gives c = C0, contradiction *)
-  contradiction.
+  (* This gives c = 0, contradiction *)
+  apply Hc_neq.
+  exact Heq.
 Qed.
 
-Lemma has_solution_a_zero_cases : forall b c,
-  has_solution C0 b c <->
-  b <> C0 \/ (b = C0 /\ c = C0).
+Lemma has_solution_a_zero_cases : forall b c : C,
+  has_solution 0 b c <->
+  b <> 0 \/ (b = 0 /\ c = 0).
 Proof.
   intros b c.
   split.
   - intro Hsol.
-    destruct (classic (b = C0)) as [Hb_zero | Hb_nonzero].
+    destruct (classic (b = 0)) as [Hb_zero | Hb_nonzero].
     + subst b.
-      destruct (classic (c = C0)) as [Hc_zero | Hc_nonzero].
+      destruct (classic (c = 0)) as [Hc_zero | Hc_nonzero].
       * right. split; reflexivity.
       * exfalso.
         apply (case_a_zero_b_zero_c_nonzero c); assumption.
@@ -148,7 +149,7 @@ Proof.
   - intros [Hb_nonzero | [Hb_zero Hc_zero]].
     + apply case_a_zero_b_nonzero; assumption.
     + subst b c.
-      exists C0.
+      exists 0.
       apply case_a_zero_b_zero_c_zero.
 Qed.
 
@@ -320,7 +321,7 @@ Lemma construct_E_from_envelope_point : forall b_prime c_prime,
   Cmod b_prime <> 0 ->
   on_envelope (Cmod b_prime) (Re c_prime) (Im c_prime) ->
   exists E : C,
-    equation C1 b_prime c_prime E.
+    equation 1 b_prime c_prime E.
 Proof.
   intros b_prime c_prime Hb_nonzero Hon.
 
@@ -410,7 +411,7 @@ Proof.
 
     exists (x, y).
 
-    unfold equation, C1, Cmult, Cplus, Cconj, C0.
+    unfold equation, 1, Cmult, Cplus, Cconj, 0.
     simpl.
 
     (* We need to verify both real and imaginary parts equal 0 *)
@@ -572,7 +573,7 @@ Proof.
 
     exists (x, y).
 
-    unfold equation, C1, Cmult, Cplus, Cconj, C0.
+    unfold equation, 1, Cmult, Cplus, Cconj, 0.
     simpl.
 
     f_equal.
@@ -909,7 +910,7 @@ Lemma construct_E_from_inside_envelope_point : forall b_prime c_prime,
   Cmod b_prime <> 0 ->
   inside_envelope (Cmod b_prime) (Re c_prime) (Im c_prime) ->
   exists E : C,
-    equation C1 b_prime c_prime E.
+    equation 1 b_prime c_prime E.
 Proof.
   intros b_prime c_prime Hb_nonzero Hin.
 
@@ -999,7 +1000,7 @@ Proof.
     (* Construct E *)
     exists (x_val, y_val).
 
-    unfold equation, C1.
+    unfold equation, 1.
     simpl.
 
     split.
@@ -1298,7 +1299,7 @@ Proof.
 
     exists (x_val, y_val).
 
-    unfold equation, C1.
+    unfold equation, 1.
     simpl.
 
     split.
@@ -1464,13 +1465,13 @@ Qed.
 *)
 
 Lemma scale_equation_by_a : forall a b_prime c_prime E,
-  equation C1 b_prime c_prime E ->
+  equation 1 b_prime c_prime E ->
   equation a (a * b_prime) (a * c_prime) E.
 Proof.
   intros a b_prime c_prime E Heq_norm.
   unfold equation in *.
 
-  (* Goal: a * E * Cconj E + (a * b_prime) * Cconj E + (a * c_prime) = C0 *)
+  (* Goal: a * E * Cconj E + (a * b_prime) * Cconj E + (a * c_prime) = 0 *)
 
   (* Factor out a *)
   replace (a * E * Cconj E + (a * b_prime) * Cconj E + (a * c_prime))
@@ -1493,19 +1494,19 @@ Qed.
   The complete envelope characterization, now with proper division!
 *)
 
-Theorem envelope_characterizes_solutions : forall a b c,
+Theorem envelope_characterizes_solutions : forall a b c : C,
   has_solution a b c <->
-  (a = C0 /\ (b <> C0 \/ (b = C0 /\ c = C0))) \/
-  (a <> C0 /\
+  (a = 0 /\ (b <> 0 \/ (b = 0 /\ c = 0))) \/
+  (a <> 0 /\
     let b_prime := b / a in
     let c_prime := c / a in
     (inside_envelope (Cmod b_prime) (Re c_prime) (Im c_prime) \/
      on_envelope (Cmod b_prime) (Re c_prime) (Im c_prime))).
 Proof.
   intros a b c.
-  destruct (classic (a = C0)) as [Ha_zero | Ha_nonzero].
+  destruct (classic (a = 0)) as [Ha_zero | Ha_nonzero].
 
-  - (* Case: a = C0 *)
+  - (* Case: a = 0 *)
     subst a.
     split; intro H.
     + left.
@@ -1514,7 +1515,7 @@ Proof.
       * apply has_solution_a_zero_cases; assumption.
       * contradiction.
 
-  - (* Case: a ≠ C0 *)
+  - (* Case: a ≠ 0 *)
     split; intro H.
 
     + (* Forward: has_solution -> on/inside envelope *)
@@ -1525,7 +1526,7 @@ Proof.
       unfold equation in Heq.
 
       (* Divide by a to get normalized form *)
-      assert (Heq_norm : E * Cconj E + (b / a) * Cconj E + (c / a) = C0).
+      assert (Heq_norm : E * Cconj E + (b / a) * Cconj E + (c / a) = 0).
       {
         (* From a·E·Ē + b·Ē + c = 0, divide by a *)
         assert (Hfactor : a * E * Cconj E + b * Cconj E + c =
@@ -1559,7 +1560,7 @@ Proof.
         (* The envelope when b_norm = 0 is: cy² = 0 and cx ≤ 0 *)
         (* Since cy = 0 always (as c' is real), we get cy² = 0 = RHS, so we're ON the envelope *)
 
-        assert (Hb_prime_zero : b_prime = C0).
+        assert (Hb_prime_zero : b_prime = 0).
         { apply Cmod_eq_0. exact Hb_zero. }
 
         unfold on_envelope, b_prime, c_prime.
@@ -1569,13 +1570,13 @@ Proof.
 
         (* From Heq_norm: |E|² + 0·Ē + c' = 0 *)
         rewrite Hb_prime_zero in Heq_norm.
-        replace (C0 * Cconj E) with C0 in Heq_norm by ring.
-        replace (E * Cconj E + C0 + c / a) with (E * Cconj E + c / a) in Heq_norm by ring.
+        replace (0 * Cconj E) with 0 in Heq_norm by ring.
+        replace (E * Cconj E + 0 + c / a) with (E * Cconj E + c / a) in Heq_norm by ring.
 
         (* So c/a = -|E|² *)
         assert (Hc_over_a : c / a = - (E * Cconj E)).
         { apply (Cplus_eq_reg_l (E * Cconj E)). ring_simplify.
-          replace (E * Cconj E + c / a) with (E * Cconj E + C0 + c / a) by ring.
+          replace (E * Cconj E + c / a) with (E * Cconj E + 0 + c / a) by ring.
           exact Heq_norm. }
 
         rewrite Hc_over_a. simpl.
@@ -1587,11 +1588,11 @@ Proof.
         - (* cy² = 0 - 0·cx = 0 *)
           simpl. ring.
         - (* cx ≤ 0 *)
-          destruct (Ceq_dec E C0) as [HE_zero | HE_nonzero].
+          destruct (Ceq_dec E 0) as [HE_zero | HE_nonzero].
           + (* E = 0: then c' = 0 *)
             rewrite HE_zero in Hc_over_a.
-            replace (C0 * Cconj C0) with C0 in Hc_over_a by ring.
-            replace (- C0) with C0 in Hc_over_a by ring.
+            replace (0 * Cconj 0) with 0 in Hc_over_a by ring.
+            replace (- 0) with 0 in Hc_over_a by ring.
             rewrite Hc_over_a. simpl. lra.
           + (* E ≠ 0: then |E|² > 0, so cx = -|E|² < 0 *)
             replace (fst (- (E * Cconj E))) with (- fst (E * Cconj E)) by (simpl; ring).
@@ -1767,7 +1768,7 @@ Proof.
            destruct (classic (Cmod b_prime = 0)) as [Hb_zero | Hb_nonzero'].
 
            ++ (* b_prime = 0 case *)
-              assert (Hb_prime_zero : b_prime = C0).
+              assert (Hb_prime_zero : b_prime = 0).
               {
                 apply Cmod_eq_0. exact Hb_zero.
               }
@@ -1813,7 +1814,7 @@ Proof.
               (* Since b_prime = b/a = 0, we have b = 0 *)
               (* Since c_prime = c/a, we have c = a·c_prime *)
 
-              assert (Hb_zero' : b = C0).
+              assert (Hb_zero' : b = 0).
               {
                 unfold b_prime in Hb_prime_zero.
                 apply (Cmult_eq_reg_l a); [| exact Ha_nonzero].
@@ -1838,7 +1839,7 @@ Proof.
               2:{ rewrite <- Rsqr_pow2. rewrite Rsqr_sqrt. reflexivity. lra. }
 
               (* Now: a · (-cx) + 0 + a · cx = 0 *)
-              replace (a * RtoC (- cx) + C0 * Cconj (RtoC (sqrt (- cx))) + a * RtoC cx)
+              replace (a * RtoC (- cx) + 0 * Cconj (RtoC (sqrt (- cx))) + a * RtoC cx)
                 with (a * RtoC (- cx) + a * RtoC cx)
                 by ring.
 
@@ -1846,7 +1847,7 @@ Proof.
                 with (a * (RtoC (- cx) + RtoC cx))
                 by ring.
 
-              replace (RtoC (- cx) + RtoC cx) with C0.
+              replace (RtoC (- cx) + RtoC cx) with 0.
               2:{ unfold RtoC. simpl. f_equal; ring. }
 
               ring.
