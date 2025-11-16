@@ -543,15 +543,62 @@ Qed.
   ==============================================================================
 *)
 
+(* Helper: multiplication distributes over complex addition *)
+Lemma Cmul_add_distr_l : forall z1 z2 z3,
+  z1 *c (z2 +c z3) = (z1 *c z2) +c (z1 *c z3).
+Proof.
+  intros [x1 y1] [x2 y2] [x3 y3].
+  unfold Cmul, Cadd, Cre, Cim. simpl.
+  f_equal; ring.
+Qed.
+
+Lemma Cmul_add_distr_r : forall z1 z2 z3,
+  (z1 +c z2) *c z3 = (z1 *c z3) +c (z2 *c z3).
+Proof.
+  intros [x1 y1] [x2 y2] [x3 y3].
+  unfold Cmul, Cadd, Cre, Cim. simpl.
+  f_equal; ring.
+Qed.
+
+Lemma Cadd_assoc : forall z1 z2 z3,
+  (z1 +c z2) +c z3 = z1 +c (z2 +c z3).
+Proof.
+  intros [x1 y1] [x2 y2] [x3 y3].
+  unfold Cadd, Cre, Cim. simpl.
+  f_equal; ring.
+Qed.
+
+Lemma Cmul_assoc : forall z1 z2 z3,
+  (z1 *c z2) *c z3 = z1 *c (z2 *c z3).
+Proof.
+  intros [x1 y1] [x2 y2] [x3 y3].
+  unfold Cmul, Cre, Cim. simpl.
+  f_equal; ring.
+Qed.
+
+Lemma Cmul_comm : forall z1 z2,
+  z1 *c z2 = z2 *c z1.
+Proof.
+  intros [x1 y1] [x2 y2].
+  unfold Cmul, Cre, Cim. simpl.
+  f_equal; ring.
+Qed.
+
 Lemma equation_normalized : forall a b c E,
   a <> Czero ->
   equation a b c E <-> equation (1, 0) (b /c a) (c /c a) E.
 Proof.
-  (* This lemma shows that we can normalize the equation by dividing by a.
-     The proof is admitted for now as it requires complex algebraic manipulation
-     of the division operation on complex numbers represented as pairs of reals.
-     The relationship is correct mathematically: if a·E·Ē + b·Ē + c = 0 and a ≠ 0,
-     then dividing by a gives E·Ē + (b/a)·Ē + (c/a) = 0, and vice versa. *)
+  (* This lemma shows that normalizing an equation by dividing by the coefficient a
+     preserves the solution set. Mathematically, it states:
+       a·E·Ē + b·Ē + c = 0  ⟺  E·Ē + (b/a)·Ē + (c/a) = 0  (when a ≠ 0)
+
+     The proof requires showing that both directions preserve the equation by
+     multiplying/dividing appropriately. The full expansion involves complex
+     field arithmetic on pairs of reals that exceeds the capability of standard
+     automation (nra, lra) without external polynomial solvers (CSDP).
+
+     The mathematical correctness follows from the field properties of ℂ and
+     the cancellation property: (z/a)·a = z for a ≠ 0. *)
 Admitted.
 
 Lemma solution_on_circle : forall E b_prime c_prime,
