@@ -152,13 +152,53 @@ Theorem case_a_zero_b_nonzero : forall b c,
   b <> Czero ->
   has_solution Czero b c.
 Proof.
-  intros b c Hb_neq.
-  (* We would need to define complex division to construct the explicit solution.
-     For now, we assert the existence without constructing it. *)
-  unfold has_solution, equation.
-  (* The proof requires complex division, which we haven't defined.
-     We leave this as an axiom representing the mathematical fact. *)
-Admitted.
+  intros [br bi] [cr ci] Hb_neq.
+  unfold has_solution.
+  set (bn := br * br + bi * bi).
+  assert (Hbn_neq : bn <> 0).
+  { unfold bn. intro Hbn_zero.
+    apply Hb_neq.
+    apply Czero_eq.
+    split.
+    - assert (Hbi_nonneg : 0 <= bi * bi) by apply Rle_0_sqr.
+      pose proof (Rplus_le_compat_l (br * br) 0 (bi * bi) Hbi_nonneg) as Hle.
+      replace (br * br + 0) with (br * br) in Hle by ring.
+      rewrite Hbn_zero in Hle.
+      assert (Hnonneg : 0 <= br * br) by apply Rle_0_sqr.
+      assert (Hsq : br * br = 0) by (apply Rle_antisym; [exact Hle | exact Hnonneg]).
+      apply Rmult_integral in Hsq as [Hbr | Hbr]; assumption.
+    - assert (Hbr_nonneg : 0 <= br * br) by apply Rle_0_sqr.
+      pose proof (Rplus_le_compat_r (bi * bi) 0 (br * br) Hbr_nonneg) as Hle.
+      replace (0 + bi * bi) with (bi * bi) in Hle by ring.
+      rewrite Hbn_zero in Hle.
+      assert (Hnonneg : 0 <= bi * bi) by apply Rle_0_sqr.
+      assert (Hsq : bi * bi = 0) by (apply Rle_antisym; [exact Hle | exact Hnonneg]).
+      apply Rmult_integral in Hsq as [Hbi | Hbi]; assumption. }
+  set (x := (- (cr * br + ci * bi)) / bn).
+  set (y := (ci * br - cr * bi) / bn).
+  exists (x, y).
+  unfold equation, Cmul, Cadd, Czero, Cconj, Cre, Cim; simpl.
+  apply Czero_eq.
+  assert (Hreal : br * x + bi * y = - cr).
+  { unfold x, y, bn.
+    unfold Rdiv.
+    field.
+    exact Hbn_neq. }
+  assert (Himag : - br * y + bi * x = - ci).
+  { unfold x, y, bn.
+    unfold Rdiv.
+    field.
+    exact Hbn_neq. }
+  split.
+  - simpl.
+    replace (br * x - bi * - y) with (br * x + bi * y) by ring.
+    rewrite Hreal.
+    field.
+  - simpl.
+    replace (br * - y) with (- br * y) by ring.
+    rewrite Himag.
+    field.
+Qed.
 
 Theorem case_a_zero_b_zero_c_zero :
   forall E : C, equation Czero Czero Czero E.
