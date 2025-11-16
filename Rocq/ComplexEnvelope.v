@@ -639,10 +639,31 @@ Lemma c_from_E_satisfies_envelope : forall E b_prime,
     (b_norm * b_norm * b_norm * b_norm) / 4 /\
   Cre c_prime <= (b_norm * b_norm) / 2.
 Proof.
-  (* This lemma states that any point c' = c_from_E_and_b E b'
-     lies inside or on the envelope defined by |b'|. The proof requires
-     showing that the maximum value of |c'| occurs at the envelope through
-     optimization and Cauchy-Schwarz inequalities. *)
+  intros E b_prime.
+  unfold c_from_E_and_b.
+  simpl.
+
+  (* Expand the complex operations to real coordinates *)
+  destruct E as [ex ey].
+  destruct b_prime as [bpx bpy].
+  unfold Cmul, Cadd, Cscale, Cconj, Cre, Cim, Cnorm, Cnorm_sq. simpl.
+
+  split.
+  - (* Bound on |c'|²: This requires showing that
+       |c'|² = |-|E|² - b'·Ē|² ≤ |b'|⁴/4
+
+       The proof uses the fact that c' = -|E|² - b'·Ē and optimizes over E.
+       By completing the square or using Cauchy-Schwarz, we can show the bound.
+       This is a genuine optimization problem requiring calculus. *)
+    admit.
+
+  - (* Bound on Re(c'): This requires showing that
+       Re(c') = -|E|² - Re(b'·Ē) ≤ |b'|²/2
+
+       Since |E|² ≥ 0 and using properties of the real part of b'·Ē,
+       the maximum occurs when the expression is optimized.
+       This also requires optimization techniques. *)
+    admit.
 Admitted.
 
 (*
@@ -666,24 +687,45 @@ Proof.
   - (* Forward: if solution exists, then c' is inside or on envelope *)
     intro Hexists.
     destruct Hexists as [E Heq].
+
     (* Use equation_normalized to convert to normalized form *)
     apply equation_normalized in Heq; try exact Ha_neq.
+
     (* E satisfies the normalized equation, so c' = c_from_E_and_b *)
-    set (b_prime := b /c a).
-    set (c_prime := c /c a).
+    set (b_prime := b /c a) in *.
+    set (c_prime := c /c a) in *.
     apply solution_on_circle in Heq.
-    (* Now we need to show that c_from_E_and_b E b_prime is inside or on the envelope *)
-    (* This follows from c_from_E_satisfies_envelope *)
+
+    (* Heq now tells us: c_prime = c_from_E_and_b E b_prime *)
+    (* We need to show c_prime is inside or on the envelope *)
+
+    (* This would follow from c_from_E_satisfies_envelope if we had it proven.
+       The key insight: any c' that can be written as c_from_E_and_b for some E
+       satisfies the envelope bounds. Since Heq gives us this representation,
+       c_prime must be on or inside the envelope. *)
     admit.
+
   - (* Backward: if c' is inside or on envelope, construct solution *)
     intro Henv.
+    unfold inside_envelope, on_envelope in Henv.
     destruct Henv as [Hinside | Hon].
-    + (* Inside envelope case *)
-      (* Need to construct E such that c_from_E_and_b E b_prime = c_prime *)
-      (* This requires solving for E given c' and b' *)
+
+    + (* Inside envelope case: c_y² < b⁴/4 - b²·c_x and c_x ≤ b²/2 *)
+      (* Strategy: solve the equation E·Ē + (b/a)·Ē + (c/a) = 0 for E.
+         This is equivalent to finding E such that:
+           |E|² + (b/a)·Ē + (c/a) = 0
+         Rearranging: |E|² = -(b/a)·Ē - (c/a)
+
+         This is a complex quadratic-type equation. For points inside the envelope,
+         solutions exist. The construction involves:
+         1. Parameterizing E in terms of its norm |E| = r
+         2. Using the constraint to solve for valid values of r and angle
+         3. Showing that inside envelope implies valid real solutions exist *)
       admit.
-    + (* On envelope case *)
-      (* Similar construction *)
+
+    + (* On envelope case: c_y² = b⁴/4 - b²·c_x and c_x ≤ b²/2 *)
+      (* Similar to inside case, but the equation has solutions exactly on
+         the boundary. The envelope characterization guarantees existence. *)
       admit.
 Admitted.
 
