@@ -58,7 +58,7 @@ Local Open Scope C_scope.
 *)
 
 Definition equation (a b c E : C) : Prop :=
-  (a * E * Cconj E) + (b * Cconj E) + c = C0.
+  (a * E * Cconj E) + (b * Cconj E) + c = RtoC 0.
 
 (*
   A solution exists if there is some E satisfying the equation.
