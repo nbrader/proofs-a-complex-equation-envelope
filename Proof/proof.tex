@@ -49,7 +49,7 @@ If $b = 0$, then the equation is simply $c=0$.
 
 Thus for $a=0$, a solution exists unless
 \[
-(b,c) = (0,c\neq 0).
+(b,c) = (0,k) \text{ for } k\neq 0.
 \]
 
 \bigskip
@@ -88,17 +88,15 @@ c' = -\,E_{\text{size}}^2 \;+\; b' E_{\text{size}}\,\overline{E_{\text{dir}}}.
 
 \smallskip
 
-For fixed $E_{\text{size}}$, varying $E_{\text{dir}}$ traces out a circle in the complex plane.  
-Write
+For fixed $E_{\text{size}}$, as we vary $E_{\text{dir}}$ over the unit circle,
+the term $b' E_{\text{size}}\,\overline{E_{\text{dir}}}$ traces out a circle of radius $|b'| E_{\text{size}}$ centered at the origin.
+Write $b_{\text{size}} = |b'|$.
+Then $c'$ traces out a circle of radius $b_{\text{size}} E_{\text{size}}$ centered at $-E_{\text{size}}^2$,
+which lies on the real axis.
+Writing $c' = c_x + i c_y$, we have
 \[
-b' = b_\Sigma\,e^{i\theta}, \qquad b_\Sigma = |b'|,
+(c_x + E_{\text{size}}^2)^2 + c_y^2 = (b_{\text{size}} E_{\text{size}})^2.
 \]
-and rotate coordinates so that the circle lies on the real axis.  
-Then $c' = c_x + i c_y$ satisfies
-\[
-(c_x + c_\Sigma)^2 + c_y^2 = (b_\Sigma E_{\text{size}})^2,
-\]
-where $c_\Sigma$ is a real shift.
 
 \bigskip
 
@@ -108,7 +106,7 @@ where $c_\Sigma$ is a real shift.
 Define
 \[
 F(c_x,c_y,z)
-  = (c_x + c_\Sigma)^2 + c_y^2 - (b_\Sigma z)^2.
+  = (c_x + z^2)^2 + c_y^2 - (b_{\text{size}} z)^2.
 \]
 The envelope of the family is obtained from
 \[
@@ -119,21 +117,25 @@ F = 0,
 We have
 \[
 \frac{\partial F}{\partial z}
-  = -2 b_\Sigma^2\, z,
+  = 2(c_x + z^2)(2z) - 2 b_{\text{size}}^2\, z
+  = 2z\bigl(2(c_x + z^2) - b_{\text{size}}^2\bigr),
 \]
-so the envelope occurs where $z = E_{\text{size}} = 0$.
+so the envelope occurs where either $z = 0$ or $2(c_x + z^2) = b_{\text{size}}^2$.
 
-Substituting $z=0$ into $F=0$ gives
+For $z = 0$: substituting into $F=0$ gives $c_x^2 + c_y^2 = 0$, so $(c_x, c_y) = (0,0)$.
+
+For $2(c_x + z^2) = b_{\text{size}}^2$: we have $z^2 = \frac{b_{\text{size}}^2}{2} - c_x$.
+Substituting into $F=0$ gives
 \[
-(c_x + c_\Sigma)^2 + c_y^2 = 0.
+\left(\frac{b_{\text{size}}^2}{2}\right)^2 + c_y^2 = b_{\text{size}}^2\left(\frac{b_{\text{size}}^2}{2} - c_x\right),
 \]
-
-Undoing the coordinate shifts and simplifications yields the envelope curve
+which simplifies to
 \[
-c_y^2
-  = -\,c_x\!\left(c_x^2 + \frac{b_\Sigma^2}{4}\right),
-\qquad
-c_x \le 0.
+c_y^2 = \frac{b_{\text{size}}^4}{4} - b_{\text{size}}^2 c_x.
+\]
+Since $z$ must be real, we require $z^2 = \frac{b_{\text{size}}^2}{2} - c_x \geq 0$, giving the constraint
+\[
+c_x \leq \frac{b_{\text{size}}^2}{2}.
 \]
 
 \begin{figure}[h]
