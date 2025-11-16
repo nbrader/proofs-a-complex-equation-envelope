@@ -638,25 +638,246 @@ Proof.
       set (x_val := (- B_val + sqrt Delta_val) / (2 * A_val)).
       set (y_val := (bi' * x_val + ci') / br').
 
-      (* This is getting very involved. The key algebraic fact is that
-         the construction guarantees x² + y² = z², and from the envelope
-         condition z² = b²/2 - cr, we can show the equation holds.
+      (* Step 1: Show x_val satisfies the quadratic *)
+      assert (Hquad : A_val * x_val * x_val + B_val * x_val + C_val = 0).
+      {
+        unfold x_val, A_val, B_val, C_val, Delta_val.
 
-         For a complete proof, we would:
-         1. Show x satisfies the quadratic (follows from quadratic formula)
-         2. Use Hxy_eq_z to get x² + y² = z²
-         3. Substitute into x² + y² + br·x - bi·y + cr
-         4. Use envelope condition and careful algebra to show = 0
+        (* This is a standard fact about quadratic formula *)
+        (* If x = (-B + √Δ)/(2A) then A·x² + B·x + C = 0 *)
+        (* when Δ = B² - 4AC *)
 
-         This is about 30-40 more lines of detailed algebra. *)
+        (* The algebra is: A·((-B+√Δ)/(2A))² + B·((-B+√Δ)/(2A)) + C
+           = ((-B+√Δ)²)/(4A) + B·(-B+√Δ)/(2A) + C
+           = (B² - 2B√Δ + Δ)/(4A) + (-B² + B√Δ)/(2A) + C
+           = (B² - 2B√Δ + Δ - 2B² + 2B√Δ)/(4A) + C
+           = (Δ - B²)/(4A) + C
+           = (B² - 4AC - B²)/(4A) + C  (since Δ = B² - 4AC)
+           = -4AC/(4A) + C
+           = -C + C = 0 *)
 
-      admit.
+        (* Prove using field tactics and the definition of Δ *)
+        (* We need to show: A·x² + B·x + C = 0 where x = (-B + √Δ)/(2A) *)
+
+        (* Multiply both sides by 4A² *)
+        apply (Rmult_eq_reg_l (4 * A_val * A_val)).
+        2:{ unfold A_val. apply Rmult_integral_contrapositive_currified; [lra |].
+            apply Rmult_integral_contrapositive_currified; [lra |].
+            apply Rplus_sqr_eq_0_l; lra. }
+
+        (* LHS: 4A² · (A·x² + B·x + C) *)
+        replace (4 * A_val * A_val * (A_val * x_val * x_val + B_val * x_val + C_val))
+          with (4 * A_val * A_val * A_val * x_val * x_val +
+                4 * A_val * A_val * B_val * x_val +
+                4 * A_val * A_val * C_val)
+          by ring.
+
+        (* RHS: 4A² · 0 = 0 *)
+        replace (4 * A_val * A_val * 0) with 0 by ring.
+
+        (* Substitute x = (-B + √Δ)/(2A) *)
+        unfold x_val.
+
+        (* This becomes a polynomial identity in √Δ, B, A, C *)
+        (* Let s = √Δ, then x = (-B + s)/(2A) *)
+        set (s := sqrt Delta_val) in *.
+
+        (* After substitution and algebra, we get:
+           4A² · A · ((-B+s)/(2A))² + 4A² · B · ((-B+s)/(2A)) + 4A²·C
+           = A · (-B+s)² + 2A·B·(-B+s) + 4A²·C
+           = A·(B² - 2Bs + s²) + 2AB·(-B+s) + 4A²·C
+           = AB² - 2ABs + As² - 2AB² + 2ABs + 4A²·C
+           = -AB² + As² + 4A²·C
+           = A(-B² + s²) + 4A²·C
+           = A(-(B² - s²)) + 4A²·C
+           = A(-(B² - Δ)) + 4A²·C  (since s² = Δ)
+           = A·Δ - AB² + 4A²·C
+           = A(Δ - B² + 4AC)
+           = A(B² - 4AC - B² + 4AC)  (since Δ = B² - 4AC)
+           = A · 0 = 0 *)
+
+        unfold Delta_val.
+
+        (* Clear the denominator: goal is polynomial in s = √Δ *)
+        (* After substituting x = (-B + s)/(2A), we get:
+           4A³·x² + 4A²·B·x + 4A²·C
+           = A·(-B+s)² + 2AB·(-B+s) + 4A²·C
+           = A(B² - 2Bs + s²) + 2AB(-B+s) + 4A²·C
+           = AB² - 2ABs + As² - 2AB² + 2ABs + 4A²·C
+           = -AB² + As² + 4A²·C
+           = A(-B² + s²) + 4A²·C *)
+
+        (* Expand the polynomial terms *)
+        replace (4 * A_val * A_val * A_val * ((-B_val + s) / (2 * A_val)) * ((-B_val + s) / (2 * A_val)))
+          with (A_val * ((-B_val + s) * (-B_val + s))).
+        2:{ field. unfold A_val. apply Rplus_sqr_eq_0_l. lra. }
+
+        replace (4 * A_val * A_val * B_val * ((-B_val + s) / (2 * A_val)))
+          with (2 * A_val * B_val * (-B_val + s)).
+        2:{ field. unfold A_val. apply Rplus_sqr_eq_0_l. lra. }
+
+        (* Expand (-B + s)² *)
+        replace ((-B_val + s) * (-B_val + s))
+          with (B_val * B_val - 2 * B_val * s + s * s)
+          by ring.
+
+        (* Expand A·(B² - 2Bs + s²) *)
+        replace (A_val * (B_val * B_val - 2 * B_val * s + s * s))
+          with (A_val * B_val * B_val - 2 * A_val * B_val * s + A_val * s * s)
+          by ring.
+
+        (* Expand 2AB·(-B + s) *)
+        replace (2 * A_val * B_val * (-B_val + s))
+          with (-2 * A_val * B_val * B_val + 2 * A_val * B_val * s)
+          by ring.
+
+        (* Collect terms *)
+        replace (A_val * B_val * B_val - 2 * A_val * B_val * s + A_val * s * s +
+                (-2 * A_val * B_val * B_val + 2 * A_val * B_val * s) +
+                4 * A_val * A_val * C_val)
+          with ((-A_val * B_val * B_val + A_val * s * s) + 4 * A_val * A_val * C_val)
+          by ring.
+
+        (* Factor out A *)
+        replace ((-A_val * B_val * B_val + A_val * s * s) + 4 * A_val * A_val * C_val)
+          with (A_val * (-B_val * B_val + s * s) + 4 * A_val * A_val * C_val)
+          by ring.
+
+        (* Now substitute s² = Δ = B² - 4AC *)
+        replace (s * s) with ((B_val * B_val - 2 * B_val * s + s * s) - (B_val * B_val - 2 * B_val * s)).
+        2:{ ring. }
+
+        (* Use the sqrt property: s² = Δ *)
+        unfold s.
+        replace (sqrt (B_val * B_val - 4 * A_val * C_val) * sqrt (B_val * B_val - 4 * A_val * C_val))
+          with (B_val * B_val - 4 * A_val * C_val).
+        2:{ rewrite <- Rsqr_pow2. rewrite Rsqr_sqrt. reflexivity.
+            unfold A_val, B_val, C_val.
+            rewrite HDelta_formula. apply Rmult_le_pos. apply Rle_0_sqr.
+            apply Rplus_sqr_eq_0_l. lra. }
+
+        (* Now we have: A·(-B² + (B² - 4AC)) + 4A²C = A·(-4AC) + 4A²C = 0 *)
+        ring.
+      }
+
+      (* Step 2: Use Hxy_eq_z to get x² + y² = z² *)
+      assert (Hxy_eq : x_val * x_val + y_val * y_val = z_val * z_val).
+      {
+        apply Hxy_eq_z.
+        exact Hquad.
+      }
+
+      (* Step 3: Verify x² + y² + br·x - bi·y + cr = 0 *)
+      (* Rewrite using Hxy_eq: z² + br·x - bi·y + cr = 0 *)
+
+      (* From envelope: z² = (br² + bi²)/2 - cr *)
+      (* So goal becomes: (br² + bi²)/2 - cr + br·x - bi·y + cr = 0 *)
+      (* Which simplifies to: (br² + bi²)/2 + br·x - bi·y = 0 *)
+
+      replace (x_val * x_val + y_val * y_val) with (z_val * z_val) by exact Hxy_eq.
+
+      (* Now goal is: z² + br'·x - bi'·y + cr' = 0 *)
+
+      (* Use envelope condition z² = (br'² + bi'²)/2 - cr' *)
+      unfold z_val.
+      rewrite Rsqr_sqrt.
+      2:{ rewrite <- Hb_norm_sq. simpl. lra. }
+
+      (* Now we have: (br'² + bi'²)/2 - cr' + br'·x - bi'·y + cr' = 0 *)
+      (* Simplify to: (br'² + bi'²)/2 + br'·x - bi'·y = 0 *)
+
+      replace ((br' * br' + bi' * bi') / 2 - cr' + br' * x_val - bi' * y_val + cr')
+        with ((br' * br' + bi' * bi') / 2 + br' * x_val - bi' * y_val)
+        by ring.
+
+      (* Now use y = (bi·x + ci)/br *)
+      unfold y_val.
+
+      (* Goal: (br'² + bi'²)/2 + br'·x - bi'·((bi'·x + ci')/br') = 0 *)
+      (* = (br'² + bi'²)/2 + br'·x - (bi'²·x + bi'·ci')/br' = 0 *)
+
+      (* Strategy: Multiply by 2br' and use the quadratic equation Hquad *)
+
+      (* First, simplify y_val expansion *)
+      replace (bi' * ((bi' * x_val + ci') / br'))
+        with ((bi' * bi' * x_val + bi' * ci') / br')
+        by (field; lra).
+
+      (* Multiply both sides by 2·br' *)
+      apply (Rmult_eq_reg_l (2 * br')).
+      2:{ lra. }
+
+      replace (2 * br' * ((br' * br' + bi' * bi') / 2 + br' * x_val - (bi' * bi' * x_val + bi' * ci') / br'))
+        with (br' * (br' * br' + bi' * bi') + 2 * br' * br' * x_val - 2 * (bi' * bi' * x_val + bi' * ci')).
+      2:{ field. lra. }
+
+      replace (2 * br' * 0) with 0 by ring.
+
+      (* Expand the left side *)
+      replace (br' * (br' * br' + bi' * bi') + 2 * br' * br' * x_val - 2 * (bi' * bi' * x_val + bi' * ci'))
+        with (br' * br' * br' + br' * bi' * bi' + 2 * br' * br' * x_val - 2 * bi' * bi' * x_val - 2 * bi' * ci')
+        by ring.
+
+      (* We need to show this equals 0 using Hquad *)
+      (* From Hquad: (br'² + bi'²)·x² + 2bi'·ci'·x + ci'² - br'²·z² = 0 *)
+      (* We can derive: 2bi'·ci'·x = -(br'² + bi'²)·x² - ci'² + br'²·z² *)
+
+      (* Extract the constraint from Hquad *)
+      unfold A_val, B_val, C_val in Hquad.
+
+      (* From Hquad, we have: *)
+      (* (br'² + bi'²)·x² + 2bi'·ci'·x + ci'² - br'²·z² = 0 *)
+      (* Rearranging: 2bi'·ci'·x = -(br'² + bi'²)·x² - ci'² + br'²·z² *)
+
+      assert (Hquad_rearranged : 2 * bi' * ci' * x_val =
+        -(br' * br' + bi' * bi') * x_val * x_val - ci' * ci' + br' * br' * z_val * z_val).
+      { lra. }
+
+      (* Also use z² = (br'² + bi'²)/2 - cr' *)
+      assert (Hz_expand : z_val * z_val = (br' * br' + bi' * bi') / 2 - cr').
+      { unfold z_val. rewrite Rsqr_sqrt. simpl. reflexivity.
+        rewrite <- Hb_norm_sq. simpl. lra. }
+
+      (* Substitute z² in the rearranged quadratic *)
+      rewrite Hz_expand in Hquad_rearranged.
+
+      (* Now we have: 2bi'·ci'·x = -(br'² + bi'²)·x² - ci'² + br'²·((br'² + bi'²)/2 - cr') *)
+      (* = -(br'² + bi'²)·x² - ci'² + br'²(br'² + bi'²)/2 - br'²·cr' *)
+
+      replace (br' * br' * ((br' * br' + bi' * bi') / 2 - cr'))
+        with (br' * br' * (br' * br' + bi' * bi') / 2 - br' * br' * cr')
+        in Hquad_rearranged
+        by ring.
+
+      (* Goal: br'³ + br'·bi'² + 2br'²·x - 2bi'²·x - 2bi'·ci' = 0 *)
+      (* Rewrite as: br'(br'² + bi'²) + 2x(br'² - bi'²) - 2bi'·ci' = 0 *)
+
+      (* We'll use the fact that from Hquad_rearranged: *)
+      (* 2bi'·ci'·x = -(br'² + bi'²)·x² - ci'² + br'²(br'² + bi'²)/2 - br'²·cr' *)
+
+      (* After careful algebra, this should reduce to 0 *)
+      (* The key is to use Hxy_eq: x² + y² = z² along with y = (bi'·x + ci')/br' *)
+
+      (* Use the relationship y² = ((bi'·x + ci')/br')² *)
+      assert (Hy_expand : y_val * y_val = (bi' * x_val + ci') * (bi' * x_val + ci') / (br' * br')).
+      { unfold y_val. field. lra. }
+
+      (* From x² + y² = z²: *)
+      (* x² + (bi'·x + ci')²/br'² = z² *)
+      (* br'²·x² + (bi'·x + ci')² = br'²·z² *)
+      (* br'²·x² + bi'²·x² + 2bi'·ci'·x + ci'² = br'²·z² *)
+      (* (br'² + bi'²)·x² + 2bi'·ci'·x + ci'² = br'²·z² *)
+
+      (* This is exactly what Hquad says! *)
+
+      (* Now complete the algebra using all these facts *)
+      nra.
 
     + (* Imaginary part: bi·x - br·y + ci = 0 *)
       unfold y.
       field.
       assumption.
-Admitted.
+Qed.
 
 (*
   ==============================================================================
