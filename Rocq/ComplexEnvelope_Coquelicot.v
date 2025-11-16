@@ -210,10 +210,9 @@ Proof.
   intros b_norm c_x c_y [Heq Hleq].
   unfold on_envelope.
   split.
-  - (* TODO: Rmult_opp_opp parsing issue: goal has (- c_y)%R * (- c_y)%R but lemma gives (- c_y * - c_y)%R *)
-    admit.
+  - rewrite <- Heq. field_simplify. lra.
   - exact Hleq.
-Admitted.
+Qed.
 
 Lemma envelope_at_origin :
   on_envelope 0 0 0.
@@ -259,9 +258,8 @@ Proof.
   exists (sqrt z_sq).
   split.
   - apply Rle_ge. apply sqrt_pos.
-  - (* TODO: %R scope issue - H has type with %R but goal without *)
-    admit.
-Admitted.
+  - unfold z_sq. symmetry. apply Rsqr_sqrt. lra.
+Qed.
 
 Lemma compute_z_from_inside_envelope : forall b_norm c_x c_y,
   inside_envelope b_norm c_x c_y ->
@@ -280,9 +278,8 @@ Proof.
   exists (sqrt z_sq).
   split.
   - apply Rle_ge. apply sqrt_pos.
-  - (* TODO: %R scope issue - H has type with %R but goal without *)
-    admit.
-Admitted.
+  - unfold z_sq. symmetry. apply Rsqr_sqrt. lra.
+Qed.
 
 (*
   Key lemma: For b' = (br, bi) ≠ 0, we can find angle θ such that
@@ -311,9 +308,8 @@ Lemma envelope_implies_discriminant_nonneg : forall b_norm cr ci z,
   (b_norm * b_norm) * z * z - ci * ci = (b_norm * b_norm * b_norm * b_norm) / 4.
 Proof.
   intros b_norm cr ci z Hb_nonzero Hz_sq Henv_eq.
-  (* TODO: Operator precedence issue - can't rewrite z*z in goal (b_norm*b_norm)*z*z *)
-  admit.
-Admitted.
+  rewrite Hz_sq, Henv_eq. field. lra.
+Qed.
 
 Lemma construct_E_from_envelope_point : forall b_prime c_prime,
   Cmod b_prime <> 0 ->
@@ -338,9 +334,7 @@ Proof.
   {
     unfold b_norm, Cmod, br, bi.
     destruct b_prime as [r i]. simpl.
-    (* TODO: Rsqr_sqrt conversion issue -  cannot convert sqrt x * sqrt x to Rsqr (sqrt x)
-       even with replace+ring. This appears to be a fundamental unification issue in Coq. *)
-    admit.
+    symmetry. apply Rsqr_sqrt. apply Rplus_le_le_0_compat; apply Rle_0_sqr.
   }
 
   (* At least one of br, bi is nonzero *)
@@ -348,9 +342,8 @@ Proof.
   {
     rewrite <- Hb_norm_sq.
     unfold b_norm.
-    (* TODO: Need to prove Cmod b_prime <> 0 -> Cmod b_prime * Cmod b_prime <> 0,
-       but nra/lra don't understand Cmod and Rmult_integral has scope issues *)
-    admit.
+    intro Hcontra.
+    apply Rmult_integral in Hcontra as [H | H]; contradiction.
   }
 
   (* Case split: br = 0 or br ≠ 0 *)
@@ -386,15 +379,18 @@ Proof.
       assert (Hdisc : (bi * bi) * z * z - ci * ci =
                       (bi * bi * bi * bi) / 4).
       {
-        (* TODO: Type unification issue - Henv_eq has type using Cmod b_prime/Im c_prime/Re c_prime
-           but goal expects b_norm/bi/ci/cr abbreviations. Would need manual rewriting. *)
-        admit.
+        apply (envelope_implies_discriminant_nonneg bi cr ci z).
+        - exact Hbi_nonzero.
+        - rewrite Hb_norm_sq. ring_simplify (0 * 0 + bi * bi). exact Hz_sq.
+        - unfold bi, ci, cr, b_norm in Henv_eq.
+          rewrite Hb_norm_sq in Henv_eq. ring_simplify (0 * 0 + Im b_prime * Im b_prime) in Henv_eq.
+          exact Henv_eq.
       }
 
       (* Now y² = z² - ci²/bi² = (bi²·z² - ci²)/bi² = b⁴/4 / bi² ≥ 0 *)
       replace (z * z - (- ci / bi) * (- ci / bi))
         with ((bi * bi * z * z - ci * ci) / (bi * bi)).
-      2: { (* TODO: field+lra cannot solve this algebraic equality *) admit. }
+      2: { field. lra. }
 
       rewrite Hdisc.
       apply Rmult_le_pos.
@@ -927,9 +923,7 @@ Proof.
   {
     unfold b_norm, Cmod, br, bi.
     destruct b_prime as [r i]. simpl.
-    (* TODO: Rsqr_sqrt conversion issue -  cannot convert sqrt x * sqrt x to Rsqr (sqrt x)
-       even with replace+ring. This appears to be a fundamental unification issue in Coq. *)
-    admit.
+    symmetry. apply Rsqr_sqrt. apply Rplus_le_le_0_compat; apply Rle_0_sqr.
   }
 
   (* At least one of br, bi is nonzero *)
