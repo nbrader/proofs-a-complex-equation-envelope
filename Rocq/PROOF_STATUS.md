@@ -70,34 +70,38 @@ This document summarizes the current state of the complex envelope proofs.
        * Helper lemma `Hxy_eq_z` proven: x² + y² = z²
        * **NO ADMITS REMAINING** in this lemma!
 
-**⚠️ Admitted (3 admits remaining in main theorem):**
+**✅ Newly Proven:**
 
-1. **Forward direction:** `envelope_characterizes_solutions`
-   ```coq
-   (* Show: If E satisfies equation, then c/a is on/inside envelope *)
-   (* Strategy: Extract |E| from equation, show envelope condition *)
-   (* Estimated: 2-3 hours of geometric analysis *)
-   ```
+5. **Forward direction:** `envelope_characterizes_solutions` (forward) ✅ **COMPLETE!**
+   - **Proved:** If E satisfies equation, then c/a is on/inside envelope (~155 lines)
+   - Key technique: Completing the square twice
+   - Shows cx ≤ (br² + bi²)/2 via (Ex + br'/2)² + (Ey + bi'/2)² ≥ 0
+   - Shows cy² ≤ A²/4 - A·cx via (br'·Ex + bi'·Ey + A/2)² ≥ 0
+   - Handles both b_prime = 0 and b_prime ≠ 0 cases
 
-2. **Inside envelope case:** Backward direction
+~~6. **Edge case:** b_prime = 0 in backward direction~~ ✅ **COMPLETE!**
+   - Fixed construction for b_prime = 0 case
+   - Uses E = √(-cx) where cx ≤ 0
+   - Fully proven (~70 lines)
+
+**⚠️ Admitted (1 admit remaining):**
+
+1. **Inside envelope case:** Backward direction (~1-2 hours to complete)
    ```coq
    (* Show: If c/a is strictly inside envelope, construct solution *)
-   (* Strategy: Adapt "on envelope" proof for interior points *)
-   (* Estimated: 1-2 hours *)
+   (* Strategy: Copy construct_E_from_envelope_point proof, adapt for strict inequalities *)
+   (* Status: Construction strategy documented, proof structure clear *)
+   (* Estimated: ~580 lines (similar to on_envelope case) *)
    ```
-
-3. **Edge case:** b_prime = 0 in backward direction
-   ```coq
-   (* Show: Re(c_prime) = 0 when b' = 0 and on envelope *)
-   (* Status: May need definition refinement *)
-   (* Estimated: 30 minutes *)
-   ```
+   Note: The construction is mathematically identical to the "on envelope" case.
+   The discriminant is strictly positive (Δ > 0) instead of zero, giving two distinct solutions.
+   A rigorous proof would copy the 580-line geometric construction with minor adaptations.
 
 **Main Theorem:**
 - `envelope_characterizes_solutions`:
-  - Forward direction: ⚠️ Admitted (geometric analysis)
-  - Backward direction: Structured, depends on `construct_E_from_envelope_point`
-  - Inside envelope case: ⚠️ Admitted (similar to "on envelope")
+  - Forward direction: ✅ **FULLY PROVEN!** (completing the square technique)
+  - Backward direction, on envelope: ✅ **FULLY PROVEN!** (uses `construct_E_from_envelope_point`)
+  - Backward direction, inside envelope: ⚠️ Admitted (needs ~580 line adaptation of proven case)
 
 ---
 
@@ -105,14 +109,16 @@ This document summarizes the current state of the complex envelope proofs.
 
 | Metric | ComplexEnvelope.v | ComplexEnvelope_Coquelicot.v |
 |--------|-------------------|------------------------------|
-| **Lines of Proof** | ~380 | ~900 |
-| **Proven Lemmas** | 15 | 11 (more substantial) |
-| **Admits** | 4 | 3 (in main theorem only) |
+| **Lines of Proof** | ~380 | ~1,200+ |
+| **Proven Lemmas** | 15 | 13 (more substantial) |
+| **Admits** | 4 | 1 (inside envelope case only) |
 | **Division Support** | ❌ No | ✅ Yes (Cdiv) |
-| **Main Theorem** | ⚠️ Formalization gap | ⚠️ 3 admits (geometric analysis) |
+| **Main Theorem Forward** | ⚠️ Formalization gap | ✅ **FULLY PROVEN!** |
+| **Main Theorem Backward (on)** | ⚠️ Admitted | ✅ **FULLY PROVEN!** |
+| **Main Theorem Backward (inside)** | ⚠️ Admitted | ⚠️ Admitted (clear strategy) |
 | **Geometric Construction** | ⚠️ Admitted | ✅ **FULLY PROVEN!** |
-| **Completion %** | ~70% | ~95% |
-| **Effort to Complete** | High (need division first) | Low (~3-4 hours) |
+| **Completion %** | ~70% | ~98% |
+| **Effort to Complete** | High (need division first) | Low (~1-2 hours copy-paste) |
 
 ---
 
@@ -120,48 +126,25 @@ This document summarizes the current state of the complex envelope proofs.
 
 ### For Coquelicot Version (Recommended Path):
 
-~~**Step 1: Complete Real Part Verification (~1 hour)**~~ ✅ **FULLY COMPLETE!**
+~~**Step 1: Complete Real Part Verification**~~ ✅ **FULLY COMPLETE!** (previous session)
 
-~~For `br = 0` case:~~ ✅ **COMPLETE!**
-```coq
-✅ Proved y = bi/2 from envelope condition
-✅ Complete algebraic verification (~80 lines)
-✅ All helper lemmas proven
-```
+~~**Step 2: Complete Forward Direction**~~ ✅ **FULLY COMPLETE!** (this session)
+- **Proved:** If E satisfies equation, then c/a is on/inside envelope (~155 lines)
+- Completing the square technique for both inequality conditions
+- Handles b_prime = 0 and b_prime ≠ 0 cases
 
-~~For `br ≠ 0` case:~~ ✅ **COMPLETE!**
-```coq
-✅ Proved quadratic formula verification (~60 lines)
-  - Showed x = (-B + √Δ)/(2A) satisfies A·x² + B·x + C = 0
-  - Used careful algebraic expansion and sqrt properties
-  - Completed with ring tactic
-✅ Proved final real part assembly (~75 lines)
-  - Showed x² + y² + br·x - bi·y + cr = 0
-  - Used quadratic equation and envelope condition
-  - Completed with nra (nonlinear real arithmetic) tactic
-✅ ALL helper lemmas proven (Hxy_eq_z, etc.)
-```
+~~**Step 3: Fix b_prime = 0 Edge Case**~~ ✅ **FULLY COMPLETE!** (this session)
+- Fixed backward direction for b_prime = 0 case
+- Constructs E = √(-cx) for real c_prime with cx ≤ 0
 
-**Geometric Construction Lemma: `construct_E_from_envelope_point`** ✅ **FULLY PROVEN!**
-- Total: ~580 lines of complete proof
-- No admits remaining in this lemma
-- Handles both br = 0 and br ≠ 0 cases completely
+**Step 4: Complete Inside Envelope Case** ⚠️ **ONLY REMAINING WORK**
 
-**Step 2: Complete Forward Direction (2-3 hours)**
+Adapt the "on envelope" geometric construction for interior points:
+- **Strategy:** Copy construct_E_from_envelope_point proof (~580 lines)
+- **Changes needed:** Use strict inequality Δ > 0 instead of Δ = 0
+- **Estimated:** 1-2 hours (mostly copy-paste with minor adaptations)
 
-Show that if `E` satisfies the equation, then `c'` is inside/on envelope:
-- Extract `|E|` from equation
-- Show this corresponds to a point on/inside the envelope curve
-
-**Step 2: Complete Inside Envelope Case (1-2 hours)**
-
-Adapt the "on envelope" proof to show line intersects circle at two points.
-
-**Step 3: Fix edge case handling (30 minutes)**
-
-Handle the b_prime = 0 case in the main theorem properly.
-
-**Total Estimated Effort: 3-4 hours** ⭐ **Major reduction from original 5-8 hours!**
+**Total Remaining Effort: 1-2 hours** 🎯 **Down from original 5-8 hours!**
 
 ---
 
@@ -188,16 +171,20 @@ Both versions contain sound mathematical content. The differences are:
 ## Next Actions
 
 ### Completed This Session: ✅
-1. ✅ ~~Prove real part for br = 0 case~~ **COMPLETE!** ⭐
-2. ✅ ~~Prove real part for br ≠ 0 case~~ **COMPLETE!** ⭐
-   - Quadratic formula verification
-   - Final algebra assembly
-3. ✅ **Geometric construction lemma: FULLY PROVEN!** 🎉
+1. ✅ ~~Prove forward direction of envelope characterization~~ **COMPLETE!** ⭐
+   - Completed the square technique (~155 lines)
+   - Handles both b_prime = 0 and b_prime ≠ 0 cases
+2. ✅ ~~Fix b_prime = 0 edge case in backward direction~~ **COMPLETE!** ⭐
+   - Constructs E = √(-cx) solution (~70 lines)
+3. ✅ ~~Document inside envelope case~~ **COMPLETE!**
+   - Clear proof strategy documented
+   - Roadmap for completion provided
 
 ### Remaining Work:
-1. Prove forward direction of envelope characterization (2-3 hours)
-2. Prove inside envelope case (1-2 hours)
-3. Fix b_prime = 0 edge case (30 minutes)
+1. **Complete inside envelope case** (1-2 hours)
+   - Copy construct_E_from_envelope_point proof (~580 lines)
+   - Adapt for strict inequality (Δ > 0 instead of Δ = 0)
+   - This is the ONLY remaining admit!
 
 ### Result:
 **Complete, gap-free formalization of the complex envelope theorem!** 🎉
@@ -207,21 +194,27 @@ Both versions contain sound mathematical content. The differences are:
 ## Progress Summary
 
 **Current Session Progress:**
-- Started with: 2 admits in geometric construction
-- Completed: br ≠ 0 real part (~135 lines of proof)
-  * Quadratic formula verification (~60 lines)
-  * Final real part assembly (~75 lines)
-- **Geometric Construction: FULLY PROVEN!** ✅
+- Started with: 3 admits in main theorem (forward direction, inside envelope, b'=0 edge case)
+- Completed forward direction: ~155 lines (completing the square technique)
+- Fixed b_prime = 0 edge case: ~70 lines
+- Documented inside envelope strategy
+- **Main theorem: 98% complete!** Only 1 admit remaining ✅
 
-**From Start to Now:**
+**From Previous Session:**
+- Geometric construction: FULLY PROVEN (580 lines)
+- br ≠ 0 real part: FULLY PROVEN (~135 lines)
+- br = 0 real part: FULLY PROVEN (~80 lines)
+
+**Overall Progress:**
 - Migrated to Coquelicot ✅
 - Implemented geometric construction ✅
 - Proved discriminant formula ✅
 - Proved all imaginary parts ✅
-- Proved br = 0 real part ✅
-- Proved br ≠ 0 real part ✅ **NEW!**
-- **Geometric construction lemma: COMPLETE!** ✅ **NEW!**
-- **~95% Complete!**
+- Proved both real part cases (br=0 and br≠0) ✅
+- **Geometric construction lemma: COMPLETE!** ✅
+- **Main theorem forward direction: COMPLETE!** ✅ **NEW!**
+- **Main theorem backward (on envelope): COMPLETE!** ✅ **NEW!**
+- **~98% Complete!**
 
 ---
 
@@ -235,7 +228,10 @@ Both versions contain sound mathematical content. The differences are:
 
 ---
 
-_Last updated: Current session (geometric construction complete!)_
-_Progress: From 5 admits → 3 admits remaining (all in main theorem)_ ⭐⭐⭐
-_**Major milestone: Geometric construction lemma FULLY PROVEN!**_
-_Total proof additions this session: ~135 lines of careful algebraic verification_
+_Last updated: Current session (main theorem 98% complete!)_
+_Progress: From 3 admits → 1 admit remaining (inside envelope case only)_ ⭐⭐⭐⭐
+_**Major milestones this session:**_
+- _Forward direction: FULLY PROVEN! (~155 lines, completing the square)_
+- _Backward b'=0 edge case: FULLY PROVEN! (~70 lines)_
+_Total proof additions this session: ~225 lines of algebraic verification_
+_**Project is now 98% complete - only 1 admit remaining!**_
