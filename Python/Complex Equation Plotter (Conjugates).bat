@@ -1,2 +1,2 @@
-python ".\Complex Equation Plotter 2 (Conjugates).py"
+py ".\Complex Equation Plotter (Conjugates).py"
 pause
