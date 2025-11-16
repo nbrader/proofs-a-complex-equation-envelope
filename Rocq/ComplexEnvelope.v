@@ -289,10 +289,37 @@ Proof.
   unfold has_solution, equation.
   (* When a = 0, the equation becomes: b·Ē + c = 0, so Ē = -c/b.
      Therefore E = conj(-c/b) = -conj(c/b). *)
-  (* The witness is: *)
   exists (Cconj ((-1, 0) *c (c /c b))).
-  (* Algebraic verification using field tactics and complex division *)
-Admitted.
+
+  (* Simplify: Czero *c E *c Cconj E = Czero *)
+  assert (H1: Czero *c (Cconj ((-1, 0) *c (c /c b))) *c
+              Cconj (Cconj ((-1, 0) *c (c /c b))) = Czero).
+  { destruct b, c. unfold Czero, Cmul, Cconj, Cdiv, Cnorm_sq, Cre, Cim. simpl.
+    f_equal; ring. }
+  rewrite H1.
+
+  (* Now we need: Czero +c b *c Cconj E +c c = Czero *)
+  (* Which is: b *c Cconj E +c c = Czero *)
+
+  (* Simplify Cconj E using Cconj_involutive *)
+  assert (H2: Cconj (Cconj ((-1, 0) *c (c /c b))) = (-1, 0) *c (c /c b)).
+  { rewrite Cconj_involutive. reflexivity. }
+
+  (* Now show: Czero +c b *c ((-1, 0) *c (c /c b)) +c c = Czero *)
+  assert (H3: b *c ((-1, 0) *c (c /c b)) = (-1, 0) *c c).
+  { (* Use associativity and commutativity of complex multiplication *)
+    destruct b as [b1 b2], c as [c1 c2].
+    unfold Cmul, Cscale, Cdiv, Cnorm_sq, Cre, Cim. simpl.
+    assert (Hnorm: b1 * b1 + b2 * b2 <> 0).
+    { apply (Cdiv_nonzero_well_defined (c1, c2) (b1, b2)). exact Hb_neq. }
+    f_equal; field; exact Hnorm. }
+
+  (* Show: Czero +c (-1, 0) *c c +c c = Czero *)
+  rewrite H2, H3.
+  destruct c as [c1 c2].
+  unfold Cadd, Czero, Cscale, Cre, Cim. simpl.
+  f_equal; ring.
+Qed.
 
 Theorem case_a_zero_b_zero_c_zero :
   forall E : C, equation Czero Czero Czero E.
@@ -527,9 +554,31 @@ Lemma solution_on_circle : forall E b_prime c_prime,
   equation (1, 0) b_prime c_prime E ->
   c_prime = c_from_E_and_b E b_prime.
 Proof.
-  (* For any E satisfying the normalized equation, c_prime is determined
-     by the equation c' = -E·Ē - b'·Ē *)
-Admitted.
+  intros E b_prime c_prime Heq.
+  unfold equation in Heq.
+  unfold c_from_E_and_b.
+  (* The equation is: (1,0) *c E *c Cconj E +c b_prime *c Cconj E +c c_prime = Czero
+     We need to show: c_prime = (-1) ·c (E *c Cconj E) +c (-1) ·c (b_prime *c Cconj E) *)
+
+  (* First, simplify (1,0) *c E *c Cconj E = E *c Cconj E *)
+  assert (Hsimp: (1, 0) *c E *c Cconj E = E *c Cconj E).
+  { destruct E. unfold Cmul, Cre, Cim. simpl. f_equal; ring. }
+  rewrite Hsimp in Heq.
+
+  (* Now Heq is: E *c Cconj E +c b_prime *c Cconj E +c c_prime = Czero *)
+  (* This means: c_prime = -(E *c Cconj E) - (b_prime *c Cconj E) *)
+
+  (* Manipulate to solve for c_prime *)
+  assert (Hrearrange: c_prime = ((-1) ·c (E *c Cconj E)) +c ((-1) ·c (b_prime *c Cconj E))).
+  { destruct E, b_prime, c_prime.
+    unfold Cmul, Cadd, Cscale, Cconj, Czero, Cre, Cim in *.
+    simpl in *.
+    apply Czero_eq in Heq.
+    destruct Heq as [Hre Him].
+    simpl in Hre, Him.
+    f_equal; lra. }
+  exact Hrearrange.
+Qed.
 
 Lemma c_from_E_satisfies_envelope : forall E b_prime,
   let c_prime := c_from_E_and_b E b_prime in
