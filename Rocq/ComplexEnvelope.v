@@ -20,6 +20,8 @@ Require Import Coq.Reals.Reals.
 Require Import Coq.micromega.Lra.
 Require Import Coq.micromega.Lia.
 Require Import Coq.micromega.Psatz.
+Require Import Coquelicot.Hierarchy.
+Require Import Coquelicot.Rbar.
 Open Scope R_scope.
 
 (*
@@ -793,13 +795,64 @@ Proof.
        This is a genuine optimization problem requiring calculus. *)
     admit.
 
-  - (* Bound on Re(c'): This requires showing that
-       Re(c') = -|E|² - Re(b'·Ē) ≤ |b'|²/2
+  - (* Bound on Re(c'): Show Re(c') = -(ex² + ey²) - (bpx·ex + bpy·ey) ≤ |b'|²/2
 
-       Since |E|² ≥ 0 and using properties of the real part of b'·Ē,
-       the maximum occurs when the expression is optimized.
-       This also requires optimization techniques. *)
-    admit.
+       Strategy: Complete the square to find the maximum.
+       Let f(ex, ey) = -(ex² + ey²) - (bpx·ex + bpy·ey)
+
+       Complete the square:
+       f = -(ex² + bpx·ex) - (ey² + bpy·ey)
+         = -((ex + bpx/2)² - bpx²/4) - ((ey + bpy/2)² - bpy²/4)
+         = -(ex + bpx/2)² - (ey + bpy/2)² + bpx²/4 + bpy²/4
+         = -(ex + bpx/2)² - (ey + bpy/2)² + (bpx² + bpy²)/4
+
+       Since -(ex + bpx/2)² ≤ 0 and -(ey + bpy/2)² ≤ 0,
+       the maximum is (bpx² + bpy²)/4
+
+       But wait, we need to show ≤ (bpx² + bpy²)/2, not /4.
+       Let me recalculate... *)
+
+    (* After simplification, we have:
+       Re(c') = - (ex * ex + ey * ey) - (bpx * ex + bpy * ey)
+
+       To maximize this, complete the square:
+       = -ex² - ey² - bpx·ex - bpy·ey
+       = -(ex² + bpx·ex + bpx²/4 - bpx²/4) - (ey² + bpy·ey + bpy²/4 - bpy²/4)
+       = -((ex + bpx/2)² - bpx²/4) - ((ey + bpy/2)² - bpy²/4)
+       = -(ex + bpx/2)² + bpx²/4 - (ey + bpy/2)² + bpy²/4
+
+       The maximum occurs at ex = -bpx/2, ey = -bpy/2, giving:
+       max Re(c') = bpx²/4 + bpy²/4 = (bpx² + bpy²)/4 = |b'|²/4
+
+       But the lemma states ≤ |b'|²/2, which is a weaker bound that's always true since
+       |b'|²/4 ≤ |b'|²/2 *)
+
+    (* After unfolding, goal is:
+       -1 * (ex * ex - ey * - ey) + -1 * (bpx * ex - bpy * - ey) <= sqrt(...) * sqrt(...) * / 2
+       Simplify to: -(ex² + ey²) - (bpx·ex + bpy·ey) ≤ (bpx² + bpy²)/2 *)
+
+    assert (Hsqrt_elim: sqrt (bpx * bpx + bpy * bpy) * sqrt (bpx * bpx + bpy * bpy) =
+                        bpx * bpx + bpy * bpy).
+    { rewrite <- sqrt_sqrt.
+      - reflexivity.
+      - apply Rplus_le_le_0_compat; apply Rle_0_sqr. }
+    rewrite Hsqrt_elim.
+
+    (* Complete the square *)
+    assert (Hsq1: 0 <= (ex + bpx * / 2) * (ex + bpx * / 2)) by apply Rle_0_sqr.
+    assert (Hsq2: 0 <= (ey + bpy * / 2) * (ey + bpy * / 2)) by apply Rle_0_sqr.
+
+    (* The maximum of -(ex² + ey²) - (bpx·ex + bpy·ey) is (bpx² + bpy²)/4 *)
+    assert (Hmax: -1 * (ex * ex - ey * - ey) + -1 * (bpx * ex - bpy * - ey) <=
+                  (bpx * bpx + bpy * bpy) * / 4).
+    { nra. }
+
+    (* Since /4 ≤ /2, we get the result *)
+    assert (Hle: (bpx * bpx + bpy * bpy) * / 4 <= (bpx * bpx + bpy * bpy) * / 2).
+    { assert (Hpos: 0 <= bpx * bpx + bpy * bpy).
+      { apply Rplus_le_le_0_compat; apply Rle_0_sqr. }
+      nra. }
+    lra.
 Admitted.
 
 (*
