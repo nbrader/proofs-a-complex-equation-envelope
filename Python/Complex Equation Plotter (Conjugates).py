@@ -321,7 +321,7 @@ while main_loop:
         # Do complex maths
         b_prime_size = abs(b_prime)
         e_size_complex = def_coords_to_complex((e_size, 0))
-        c_prime_centre = e_size_complex + e_size_complex*(real_to_complex(0) - e_size_complex)
+        c_prime_centre = - e_size_complex**2
         c_prime_rad = e_size*b_prime_size
         c_bar = (b_prime*e_dir - e_size_complex)
         c_prime = e_size_complex*(b_prime*e_dir - e_size_complex)
@@ -393,11 +393,14 @@ while main_loop:
     else:
         # Display for many e
         main_surf.fill((0,0,0))
-        
+
+        # Calculate b_prime once outside the loop
+        b_prime = def_coords_to_complex(p_right_mouse)
+        b_prime_size = abs(b_prime)
+        multiplicative_identity = real_to_complex(1)
+
         for e_index in range(0,20):
             e_scale = e_index/2
-            multiplicative_identity = real_to_complex(1)
-            b_prime = def_coords_to_complex(p_right_mouse)
             e_size_complex = e_scale * multiplicative_identity
             e_size = abs(e_size_complex)
             if e_size < 0:
@@ -406,26 +409,15 @@ while main_loop:
             if abs(middle_mouse_complex) != 0:
                 e_dir = middle_mouse_complex/abs(middle_mouse_complex)
                 e = e_size*e_dir
-                
+
                 # Do complex maths
-                b_prime_size = abs(b_prime)
                 e_size_complex = def_coords_to_complex((e_size, 0))
-                c_prime_centre_from_e_size = e_size_complex - e_size_complex**2  # e_size_complex + e_size_complex*(real_to_complex(0) - e_size_complex)
-                c_prime_centre_from_origin = - e_size_complex**2  # e_size_complex*(real_to_complex(0) - e_size_complex)
+                c_prime_centre = - e_size_complex**2  # Center at -e² on the real axis
                 c_prime_rad = e_size*b_prime_size
                 c_bar = (b_prime*e_dir - e_size_complex)
                 c_prime = e_size_complex*(b_prime*e_dir - e_size_complex)
                 c_bar_offset = e_size_complex + c_bar
                 c_prime_offset = e_size_complex + c_prime
-                
-                if show_envelope_attempt and b_prime_size != 0:
-                    screen_radius_complex = -def_coords_to_complex(screen_to_def_coords((0,0))).real
-                    for envelope_it in range(NO_OF_ENVELOPE_POINTS):
-                        envelope_param = envelope_it/(NO_OF_ENVELOPE_POINTS-1)
-                        env_y = (1-envelope_param)*(-screen_radius_complex) + envelope_param*(screen_radius_complex)
-                        env_x = -env_y**2 / (b_prime_size**2) +  (b_prime_size**2) / 4
-                        p_env = complex_to_def_coords(complex(env_x, env_y))
-                        draw_circle(main_surf, CYAN, p_env,   "", 5, 1)
                     
                 
                 # Convert complex numbers back into default coordinates
@@ -433,8 +425,7 @@ while main_loop:
                 p_b_prime                 = complex_to_def_coords(b_prime)
                 p_e                       = complex_to_def_coords(e)
                 p_e_size                  = complex_to_def_coords(e_size_complex)
-                p_c_prime_centre_from_e_size = complex_to_def_coords(c_prime_centre_from_e_size)
-                p_c_prime_centre_from_origin = complex_to_def_coords(c_prime_centre_from_origin)
+                p_c_prime_centre          = complex_to_def_coords(c_prime_centre)
                 p_c_bar                   = complex_to_def_coords(c_bar)
                 p_c_prime                 = complex_to_def_coords(c_prime)
                 p_c_bar_offset            = complex_to_def_coords(c_bar_offset)
@@ -445,23 +436,30 @@ while main_loop:
                 rad_c_prime_rad           = round(def_scale_to_screen_scale(c_prime_rad))
                 
                 draw_circle(main_surf, GREY, ORIGIN, "")
-                
+
                 draw_circle(main_surf, GREEN, p_right_mouse, "|RightBtn| = |b'|", 5, 1)
-                
+
                 if show_more:
                     draw_arrow(main_surf, BLUE,  ORIGIN, p_e)
                     draw_arrow(main_surf, BLUE,  ORIGIN, p_e_size)
                     draw_arrow(main_surf, MAGENTA,  p_e_size, p_c_prime_offset, "c'")
-                    
-                    if rad_c_prime_rad >= 1:
-                        draw_circle(main_surf, MAGENTA, p_c_prime_centre_from_e_size, "", rad_c_prime_rad, 1)
-                
+
                 if show_more:
                     draw_arrow(main_surf, DARK_MAGENTA,  ORIGIN, p_c_prime, "c'")
-                
+
                 if rad_c_prime_rad >= 1:
-                    draw_circle(main_surf, DARK_MAGENTA, p_c_prime_centre_from_origin, "", rad_c_prime_rad, 1)
-        
+                    draw_circle(main_surf, MAGENTA, p_c_prime_centre, "", rad_c_prime_rad, 1)
+
+        # Draw the envelope once after all circles (outside the loop)
+        if show_envelope_attempt and b_prime_size != 0:
+            screen_radius_complex = -def_coords_to_complex(screen_to_def_coords((0,0))).real
+            for envelope_it in range(NO_OF_ENVELOPE_POINTS):
+                envelope_param = envelope_it/(NO_OF_ENVELOPE_POINTS-1)
+                env_y = (1-envelope_param)*(-screen_radius_complex) + envelope_param*(screen_radius_complex)
+                env_x = -env_y**2 / (b_prime_size**2) +  (b_prime_size**2) / 4
+                p_env = complex_to_def_coords(complex(env_x, env_y))
+                draw_circle(main_surf, CYAN, p_env,   "", 5, 1)
+
         draw_text(main_surf, GREY,  screen_to_def_coords((10,10)), "Inputs:")
         draw_text(main_surf, GREEN, screen_to_def_coords((10,30)), "b' = {}".format(b_prime))
         draw_text(main_surf, GREEN,  screen_to_def_coords((10,50)), "|b'| = {}".format(b_prime_size))
