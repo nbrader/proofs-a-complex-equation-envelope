@@ -169,11 +169,78 @@ Proof.
   simpl in Heq.
   apply Czero_eq in Heq.
   destruct Heq as [Hre Him].
-  (* This proof requires complex algebraic reasoning about the equation *)
-  (* r * r1 - r0 * (-r2) = 0 and r * (-r2) + r0 * r1 = 0 *)
-  (* Which simplifies to: r*r1 + r0*r2 = 0 and r0*r1 - r*r2 = 0 *)
-  (*  From these, if r ≠ 0 or r0 ≠ 0, we can show r1 = r2 = 0 *)
-Admitted.
+  (* Simplify Hre and Him *)
+  simpl in Hre, Him.
+  (* Rewrite into standard form *)
+  assert (Hre': r * r1 + r0 * r2 = 0) by lra.
+  assert (Him': r0 * r1 - r * r2 = 0) by lra.
+  clear Hre Him.
+  rename Hre' into Hre.
+  rename Him' into Him.
+  (* Now Hre: r * r1 + r0 * r2 = 0 and Him: r0 * r1 - r * r2 = 0 *)
+  (* We'll show that if b ≠ 0, then E = 0. *)
+  destruct (Req_dec r 0), (Req_dec r0 0).
+  - (* r = 0 and r0 = 0, so b = 0 *)
+    left. apply Czero_eq. simpl. split; assumption.
+  - (* r = 0, r0 ≠ 0 *)
+    right. apply Czero_eq. simpl.
+    subst r. simpl in Hre, Him.
+    (* Hre: 0 + r0 * r2 = 0, so r0 * r2 = 0 *)
+    (* Him: 0 + r0 * r1 = 0, so r0 * r1 = 0 *)
+    assert (Heq1: r0 * r1 = 0) by lra.
+    assert (Heq2: r0 * r2 = 0) by lra.
+    apply Rmult_integral in Heq1.
+    apply Rmult_integral in Heq2.
+    destruct Heq1 as [H1 | H1]; [lra |].
+    destruct Heq2 as [H2 | H2]; [lra |].
+    split; assumption.
+  - (* r ≠ 0, r0 = 0 *)
+    right. apply Czero_eq. simpl.
+    subst r0. simpl in Hre, Him.
+    (* Hre: r * r1 + 0 = 0, so r * r1 = 0 *)
+    (* Him: 0 - r * r2 = 0, so r * r2 = 0 *)
+    assert (Heq1: r * r1 = 0) by lra.
+    assert (Heq2: r * r2 = 0) by lra.
+    apply Rmult_integral in Heq1.
+    apply Rmult_integral in Heq2.
+    destruct Heq1 as [H1 | H1]; [lra |].
+    destruct Heq2 as [H2 | H2]; [lra |].
+    split; assumption.
+  - (* r ≠ 0, r0 ≠ 0, so b ≠ 0, need to show E = 0 *)
+    right. apply Czero_eq. simpl.
+    split.
+    + (* Show r1 = 0 *)
+      (* From Hre: r * r1 + r0 * r2 = 0 and Him: r0 * r1 - r * r2 = 0
+         Multiply Hre by r: r * (r * r1 + r0 * r2) = 0, so r*r*r1 + r*r0*r2 = 0
+         Multiply Him by r0: r0 * (r0 * r1 - r * r2) = 0, so r0*r0*r1 - r0*r*r2 = 0
+         Add them: (r*r + r0*r0)*r1 = 0 *)
+      assert (Hsum: (r * r + r0 * r0) * r1 = 0).
+      { assert (H1: r * r * r1 + r * r0 * r2 = 0) by (apply (f_equal (Rmult r)) in Hre; lra).
+        assert (H2: r0 * r0 * r1 - r0 * r * r2 = 0) by (apply (f_equal (Rmult r0)) in Him; lra).
+        lra. }
+      assert (Hpos: r * r + r0 * r0 > 0).
+      { (* For any nonzero r, r * r > 0 *)
+        assert (Hr_sq: r * r > 0) by nra.
+        assert (Hr0_sq: r0 * r0 > 0) by nra.
+        lra. }
+      apply Rmult_integral in Hsum.
+      destruct Hsum as [Hcontra | Hr1]; [lra | exact Hr1].
+    + (* Show r2 = 0 *)
+      (* Multiply Hre by r0: r0*r*r1 + r0*r0*r2 = 0
+         Multiply Him by r: r*r0*r1 - r*r*r2 = 0
+         Subtract: (r*r + r0*r0)*r2 = 0 *)
+      assert (Hdiff: (r * r + r0 * r0) * r2 = 0).
+      { assert (H1: r0 * r * r1 + r0 * r0 * r2 = 0) by (apply (f_equal (Rmult r0)) in Hre; lra).
+        assert (H2: r * r0 * r1 - r * r * r2 = 0) by (apply (f_equal (Rmult r)) in Him; lra).
+        lra. }
+      assert (Hpos: r * r + r0 * r0 > 0).
+      { (* For any nonzero r, r * r > 0 *)
+        assert (Hr_sq: r * r > 0) by nra.
+        assert (Hr0_sq: r0 * r0 > 0) by nra.
+        lra. }
+      apply Rmult_integral in Hdiff.
+      destruct Hdiff as [Hcontra | Hr2]; [lra | exact Hr2].
+Qed.
 
 (*
   ==============================================================================
