@@ -397,17 +397,87 @@ Proof.
 
     + (* Real part: x² + y² + 0·x - bi·y + cr = 0 *)
       (* We have x² + y² = z² from definition of y *)
-      unfold y, y_sq, x, br, bi, cr, ci, b_norm, z.
-      destruct b_prime, c_prime. simpl in *.
-      unfold bi in *. simpl in *.
+      unfold y, y_sq, x.
 
-      (* y² = z² - x² by definition, so x² + y² = z² *)
+      (* Unfold to get concrete values *)
+      unfold br, bi, cr, ci, b_norm, z in *.
+      destruct b_prime as [br' bi']. destruct c_prime as [cr' ci'].
+      simpl in *.
+
+      (* We have br' = 0 from case *)
+      simpl.
+
+      (* Simplify: x² + y² - bi'·y + cr' = 0 *)
+      (* Since y = sqrt(y_sq) and y_sq = z² - x², we have x² + y² = z² *)
+
+      (* First show that y² = bi'²/4 *)
+      assert (Hy_sq_value :
+        let z_val := sqrt ((bi' * bi') / 2 - cr') in
+        let x_val := - ci' / bi' in
+        z_val * z_val - x_val * x_val = (bi' * bi') / 4).
+      {
+        simpl.
+        destruct Hon as [Henv_eq _].
+        simpl in Henv_eq.
+        replace (0 * 0 + bi' * bi') with (bi' * bi') in Hb_norm_sq by ring.
+
+        (* z² = bi²/2 - cr *)
+        rewrite Rsqr_sqrt.
+        2:{ rewrite <- Hb_norm_sq. simpl. lra. }
+
+        (* x² = ci²/bi² *)
+        (* z² - x² = (bi²/2 - cr) - ci²/bi² *)
+        replace ((bi' * bi') / 2 - cr' - (- ci' / bi') * (- ci' / bi'))
+          with (((bi' * bi') / 2 - cr') - (ci' * ci') / (bi' * bi'))
+          by (field; lra).
+
+        (* Use envelope: ci² = bi⁴/4 - bi²·cr *)
+        replace (ci' * ci') with
+          ((bi' * bi' * bi' * bi') / 4 - (bi' * bi') * cr')
+          by (rewrite <- Henv_eq; simpl; ring).
+
+        (* Simplify *)
+        field_simplify; [| lra].
+        field.
+        lra.
+      }
+
+      (* Therefore y = bi'/2 *)
+      assert (Hy_value : sqrt y_sq = bi' / 2).
+      {
+        unfold y_sq.
+        apply Rsqr_inj; [apply sqrt_pos | lra |].
+        rewrite Rsqr_sqrt; [| lra].
+        simpl in Hy_sq_value.
+        exact Hy_sq_value.
+      }
+
+      (* Now verify the equation *)
       rewrite Rsqr_sqrt; [| lra].
+      rewrite Hy_value.
 
-      (* Now need: z² - bi·√(z² - x²) + cr = 0 *)
-      (* This should follow from the envelope condition *)
-      (* But the specific choice of sign for y matters *)
-      admit.
+      (* x² + y² = z² *)
+      unfold y_sq, x.
+      simpl.
+      rewrite Rsqr_sqrt; [| rewrite <- Hb_norm_sq; simpl; lra].
+
+      (* Goal: z² - bi'·(bi'/2) + cr' = 0 *)
+      (* z² = bi²/2 - cr, so z² + cr = bi²/2 *)
+      (* bi'·(bi'/2) = bi²/2 *)
+      (* Therefore z² - bi²/2 + cr = 0 follows from z² + cr = bi²/2 *)
+
+      replace (bi' / 2) with (bi' * / 2) by (unfold Rdiv; reflexivity).
+
+      (* Simplify using z² = bi²/2 - cr *)
+      rewrite Rsqr_sqrt; [| rewrite <- Hb_norm_sq; simpl; lra].
+
+      replace (0 * 0 + bi' * bi') with (bi' * bi') in Hb_norm_sq by ring.
+      rewrite <- Hb_norm_sq in Hz_sq.
+      simpl in Hz_sq.
+      rewrite Hz_sq.
+
+      field.
+      lra.
 
     + (* Imaginary part: 0 + bi·x - 0·y + ci = 0 *)
       unfold x, br, bi, ci. destruct b_prime, c_prime. simpl in *.
@@ -487,16 +557,99 @@ Proof.
     f_equal.
 
     + (* Real part: x² + y² + br·x - bi·y + cr = 0 *)
-      unfold y, x, A, B, C, Delta, sqrt_Delta, br, bi, cr, ci, b_norm, z.
-      destruct b_prime, c_prime. simpl in *.
+      unfold y, x, A, B, C, Delta, sqrt_Delta.
+      unfold br, bi, cr, ci, b_norm, z in *.
+      destruct b_prime as [br' bi']. destruct c_prime as [cr' ci'].
+      simpl in *.
 
-      (* x satisfies the quadratic A·x² + B·x + C = 0 *)
-      (* which means (br² + bi²)·x² + 2·bi·ci·x + (ci² - br²·z²) = 0 *)
-      (* From this and y = (bi·x + ci)/br, we get x² + y² = z² *)
-      (* Then the envelope condition z² + cr = b²/2 should give us the result *)
+      (* Key fact: x satisfies the quadratic A·x² + B·x + C = 0 *)
+      (* where A = br'² + bi'², B = 2·bi'·ci', C = ci'² - br'²·z² *)
 
-      (* This is a tedious but straightforward algebraic verification *)
-      (* For now, we admit this final step *)
+      (* From this quadratic, we can derive that x² + y² = z² *)
+      assert (Hxy_eq_z : forall x_val : R,
+        let A_val := br' * br' + bi' * bi' in
+        let B_val := 2 * bi' * ci' in
+        let C_val := ci' * ci' - br' * br' *
+          (sqrt ((br' * br' + bi' * bi') / 2 - cr')) *
+          (sqrt ((br' * br' + bi' * bi') / 2 - cr')) in
+        let y_val := (bi' * x_val + ci') / br' in
+        A_val * x_val * x_val + B_val * x_val + C_val = 0 ->
+        x_val * x_val + y_val * y_val =
+          (sqrt ((br' * br' + bi' * bi') / 2 - cr')) *
+          (sqrt ((br' * br' + bi' * bi') / 2 - cr'))).
+      {
+        intros x_val A_val B_val C_val y_val Hquad.
+        unfold A_val, B_val, C_val, y_val in *.
+
+        (* From (br'² + bi'²)·x² + 2·bi'·ci'·x + ci'² - br'²·z² = 0 *)
+        (* We have: (br'² + bi'²)·x² + 2·bi'·ci'·x + ci'² = br'²·z² *)
+
+        (* Now: br'²·x² + bi'²·x² + 2·bi'·ci'·x + ci'² = br'²·z² *)
+        (*      br'²·x² + (bi'·x + ci')² = br'²·z² *)
+        (*      br'²·x² + br'²·y² = br'²·z²  (since y = (bi'·x + ci')/br') *)
+        (*      x² + y² = z² *)
+
+        apply (Rmult_eq_reg_l (br' * br')); [| lra].
+
+        replace ((br' * br') * (x_val * x_val + y_val * y_val))
+          with ((br' * br') * x_val * x_val + (br' * br') * y_val * y_val)
+          by ring.
+
+        replace ((br' * br') * y_val * y_val)
+          with ((bi' * x_val + ci') * (bi' * x_val + ci'))
+          by (unfold y_val; field; lra).
+
+        replace ((br' * br') * x_val * x_val + (bi' * x_val + ci') * (bi' * x_val + ci'))
+          with ((br' * br' + bi' * bi') * x_val * x_val +
+                2 * bi' * ci' * x_val + ci' * ci')
+          by ring.
+
+        (* From Hquad: A·x² + B·x + C = 0 *)
+        (* So: (br'² + bi'²)·x² + 2·bi'·ci'·x + ci'² - br'²·z² = 0 *)
+        (* Therefore: (br'² + bi'²)·x² + 2·bi'·ci'·x + ci'² = br'²·z² *)
+
+        replace ((br' * br' + bi' * bi') * x_val * x_val +
+                 2 * bi' * ci' * x_val + ci' * ci')
+          with ((br' * br' + bi' * bi') * x_val * x_val +
+                2 * bi' * ci' * x_val +
+                (ci' * ci' - br' * br' *
+                 (sqrt ((br' * br' + bi' * bi') / 2 - cr')) *
+                 (sqrt ((br' * br' + bi' * bi') / 2 - cr'))) +
+                br' * br' *
+                (sqrt ((br' * br' + bi' * bi') / 2 - cr')) *
+                (sqrt ((br' * br' + bi' * bi') / 2 - cr')))
+          by ring.
+
+        rewrite <- Hquad.
+        ring.
+      }
+
+      (* Now use this to verify the real part *)
+      (* We need: x² + y² + br'·x - bi'·y + cr' = 0 *)
+
+      (* The quadratic formula gives us x = (-B + √Δ)/(2A) *)
+      (* and this x satisfies A·x² + B·x + C = 0 *)
+
+      set (A_val := br' * br' + bi' * bi').
+      set (B_val := 2 * bi' * ci').
+      set (z_val := sqrt ((br' * br' + bi' * bi') / 2 - cr')).
+      set (C_val := ci' * ci' - br' * br' * z_val * z_val).
+      set (Delta_val := B_val * B_val - 4 * A_val * C_val).
+      set (x_val := (- B_val + sqrt Delta_val) / (2 * A_val)).
+      set (y_val := (bi' * x_val + ci') / br').
+
+      (* This is getting very involved. The key algebraic fact is that
+         the construction guarantees x² + y² = z², and from the envelope
+         condition z² = b²/2 - cr, we can show the equation holds.
+
+         For a complete proof, we would:
+         1. Show x satisfies the quadratic (follows from quadratic formula)
+         2. Use Hxy_eq_z to get x² + y² = z²
+         3. Substitute into x² + y² + br·x - bi·y + cr
+         4. Use envelope condition and careful algebra to show = 0
+
+         This is about 30-40 more lines of detailed algebra. *)
+
       admit.
 
     + (* Imaginary part: bi·x - br·y + ci = 0 *)
