@@ -1,0 +1,12 @@
+# Rocq Project Configuration File
+# This file specifies the project structure for the complex equation envelope proof
+
+# Compiler flags
+-arg -w
+-arg -notation-overridden,-redundant-canonical-projection,-several-object-files
+
+# Logical name for the project
+-R . ComplexEnvelope
+
+# Source files
+ComplexEnvelope.v
