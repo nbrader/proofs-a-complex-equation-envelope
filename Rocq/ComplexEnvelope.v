@@ -584,22 +584,158 @@ Proof.
   f_equal; ring.
 Qed.
 
+Lemma Cmul_Czero_l : forall z,
+  Czero *c z = Czero.
+Proof.
+  intros [x y].
+  unfold Czero, Cmul, Cre, Cim. simpl.
+  f_equal; ring.
+Qed.
+
+Lemma Cmul_one_l : forall z,
+  (1, 0) *c z = z.
+Proof.
+  intros [x y].
+  unfold Cmul, Cre, Cim. simpl.
+  f_equal; ring.
+Qed.
+
+Lemma Cadd_Czero_r : forall z,
+  z +c Czero = z.
+Proof.
+  intros [x y].
+  unfold Cadd, Czero, Cre, Cim. simpl.
+  f_equal; ring.
+Qed.
+
+(* Key lemma: if z *c a = w *c a and a ≠ 0, then z = w *)
+Lemma Cmul_cancel_r : forall z w a,
+  a <> Czero ->
+  z *c a = w *c a ->
+  z = w.
+Proof.
+  intros [zx zy] [wx wy] [ax ay] Ha_neq Heq.
+  unfold Cmul, Cre, Cim in Heq.
+  simpl in Heq.
+  inversion Heq as [[Hre Him]].
+  simpl in Hre, Him.
+
+  assert (Hnorm: ax * ax + ay * ay <> 0).
+  { intro Hcontra.
+    apply Ha_neq.
+    apply Czero_eq. simpl.
+    apply Rplus_eq_R0 in Hcontra; try apply Rle_0_sqr.
+    destruct Hcontra as [Hax Hay].
+    apply Rmult_integral in Hax.
+    apply Rmult_integral in Hay.
+    destruct Hax as [Hax | Hax]; destruct Hay as [Hay | Hay]; auto. }
+
+  f_equal.
+  - (* Real parts equal *)
+    assert (H1: (zx - wx) * ax - (zy - wy) * ay = 0) by lra.
+    assert (H2: (zx - wx) * ay + (zy - wy) * ax = 0) by lra.
+    (* From H1: (zx - wx) * ax = (zy - wy) * ay
+       From H2: (zx - wx) * ay = -(zy - wy) * ax
+       Multiply H1 by ax and H2 by ay, add:
+       (zx - wx) * ax * ax + (zx - wx) * ay * ay = 0
+       (zx - wx) * (ax * ax + ay * ay) = 0 *)
+    assert (Hdiff_x: (zx - wx) * (ax * ax + ay * ay) = 0).
+    { apply (f_equal (fun r => r * ax)) in H1.
+      apply (f_equal (fun r => r * ay)) in H2.
+      lra. }
+    apply Rmult_integral in Hdiff_x.
+    destruct Hdiff_x as [Hdiff | Hcontra]; lra.
+
+  - (* Imaginary parts equal *)
+    assert (H1: (zx - wx) * ax - (zy - wy) * ay = 0) by lra.
+    assert (H2: (zx - wx) * ay + (zy - wy) * ax = 0) by lra.
+    (* Similar to real part *)
+    assert (Hdiff_y: (zy - wy) * (ax * ax + ay * ay) = 0).
+    { apply (f_equal (fun r => r * ay)) in H1.
+      apply (f_equal (fun r => r * ax)) in H2.
+      lra. }
+    apply Rmult_integral in Hdiff_y.
+    destruct Hdiff_y as [Hdiff | Hcontra]; lra.
+Qed.
+
 Lemma equation_normalized : forall a b c E,
   a <> Czero ->
   equation a b c E <-> equation (1, 0) (b /c a) (c /c a) E.
 Proof.
-  (* This lemma shows that normalizing an equation by dividing by the coefficient a
-     preserves the solution set. Mathematically, it states:
-       a·E·Ē + b·Ē + c = 0  ⟺  E·Ē + (b/a)·Ē + (c/a) = 0  (when a ≠ 0)
+  intros a b c E Ha_neq.
+  unfold equation.
 
-     The proof requires showing that both directions preserve the equation by
-     multiplying/dividing appropriately. The full expansion involves complex
-     field arithmetic on pairs of reals that exceeds the capability of standard
-     automation (nra, lra) without external polynomial solvers (CSDP).
+  assert (Hone: (1, 0) *c E *c Cconj E = E *c Cconj E).
+  { rewrite Cmul_one_l. reflexivity. }
 
-     The mathematical correctness follows from the field properties of ℂ and
-     the cancellation property: (z/a)·a = z for a ≠ 0. *)
-Admitted.
+  assert (Hb_cancel: (b /c a) *c a = b).
+  { apply Cmul_div_cancel. exact Ha_neq. }
+  assert (Hc_cancel: (c /c a) *c a = c).
+  { apply Cmul_div_cancel. exact Ha_neq. }
+
+  split; intro Heq.
+  - (* Forward: (a *c E *c Cconj E) +c (b *c Cconj E) +c c = Czero
+       implies (E *c Cconj E) +c ((b /c a) *c Cconj E) +c (c /c a) = Czero *)
+    rewrite Hone.
+    apply Cmul_cancel_r with (a := a); try assumption.
+
+    (* LHS: ((E *c Cconj E) +c ((b /c a) *c Cconj E) +c (c /c a)) *c a *)
+    rewrite Cmul_add_distr_r.
+    rewrite Cmul_add_distr_r.
+
+    (* Expand: (E *c Cconj E) *c a *)
+    assert (H1: (E *c Cconj E) *c a = a *c E *c Cconj E).
+    { destruct E, a. unfold Cmul, Cconj, Cre, Cim. simpl.
+      f_equal; ring. }
+    rewrite H1.
+
+    (* Expand: ((b /c a) *c Cconj E) *c a *)
+    assert (H2: ((b /c a) *c Cconj E) *c a = b *c Cconj E).
+    { destruct E as [ex ey].
+      destruct a as [ax ay].
+      destruct b as [bx by0].
+      unfold Cmul, Cconj, Cdiv, Cnorm_sq, Cre, Cim in *. simpl in *.
+      assert (Hnorm: ax * ax + ay * ay <> 0).
+      { apply (Cdiv_nonzero_well_defined (ex, ey) (ax, ay)). exact Ha_neq. }
+      unfold Rdiv. f_equal; field; exact Hnorm. }
+    rewrite H2.
+
+    rewrite Hc_cancel.
+
+    (* RHS: Czero *c a = Czero *)
+    rewrite Heq.
+    rewrite Cmul_Czero_l.
+    reflexivity.
+
+  - (* Backward: (E *c Cconj E) +c ((b /c a) *c Cconj E) +c (c /c a) = Czero
+       implies (a *c E *c Cconj E) +c (b *c Cconj E) +c c = Czero *)
+    rewrite Hone in Heq.
+
+    (* Multiply both sides by a *)
+    apply (f_equal (fun z => z *c a)) in Heq.
+    rewrite Cmul_Czero_l in Heq.
+
+    rewrite Cmul_add_distr_r in Heq.
+    rewrite Cmul_add_distr_r in Heq.
+
+    assert (H1: (E *c Cconj E) *c a = a *c E *c Cconj E).
+    { destruct E, a. unfold Cmul, Cconj, Cre, Cim. simpl.
+      f_equal; ring. }
+    rewrite H1 in Heq.
+
+    assert (H2: ((b /c a) *c Cconj E) *c a = b *c Cconj E).
+    { destruct E as [ex ey].
+      destruct a as [ax ay].
+      destruct b as [bx by0].
+      unfold Cmul, Cconj, Cdiv, Cnorm_sq, Cre, Cim in *. simpl in *.
+      assert (Hnorm: ax * ax + ay * ay <> 0).
+      { apply (Cdiv_nonzero_well_defined (ex, ey) (ax, ay)). exact Ha_neq. }
+      unfold Rdiv. f_equal; field; exact Hnorm. }
+    rewrite H2 in Heq.
+
+    rewrite Hc_cancel in Heq.
+    exact Heq.
+Qed.
 
 Lemma solution_on_circle : forall E b_prime c_prime,
   equation (1, 0) b_prime c_prime E ->
