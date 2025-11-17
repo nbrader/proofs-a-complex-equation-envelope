@@ -1,0 +1,3 @@
+ComplexEnvelope_Coquelicot.vo ComplexEnvelope_Coquelicot.glob ComplexEnvelope_Coquelicot.v.beautified ComplexEnvelope_Coquelicot.required_vo: ComplexEnvelope_Coquelicot.v 
+ComplexEnvelope_Coquelicot.vio: ComplexEnvelope_Coquelicot.v 
+ComplexEnvelope_Coquelicot.vos ComplexEnvelope_Coquelicot.vok ComplexEnvelope_Coquelicot.required_vos: ComplexEnvelope_Coquelicot.v 
