@@ -404,11 +404,11 @@ Proof.
       }
 
       (* Now y² = z² - ci²/bi² = (bi²·z² - ci²)/bi² = b⁴/4 / bi² ≥ 0 *)
+      Close Scope C_scope.
       replace (z * z - (- ci / bi) * (- ci / bi))
         with ((bi * bi * z * z - ci * ci) / (bi * bi)).
-      2: { Close Scope C_scope.
-           field_simplify; [reflexivity | exact Hbi_nonzero].
-           Open Scope C_scope. }
+      2: { field_simplify; [reflexivity | exact Hbi_nonzero | exact Hbi_nonzero]. }
+      Open Scope C_scope.
 
       rewrite Hdisc.
       apply Rmult_le_pos.
