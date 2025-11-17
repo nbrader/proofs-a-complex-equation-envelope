@@ -392,13 +392,12 @@ Proof.
         Close Scope C_scope.
         apply (envelope_implies_discriminant_nonneg bi cr ci z).
         - exact Hbi_nonzero.
-        - rewrite Hbr_zero in Hb_norm_sq.
-          ring_simplify in Hb_norm_sq.
-          rewrite <- Hb_norm_sq.
-          exact Hz_sq.
-        - unfold bi, ci, cr, b_norm in Henv_eq.
-          rewrite Hb_norm_sq in Henv_eq. ring_simplify (0 * 0 + Im b_prime * Im b_prime) in Henv_eq.
-          exact Henv_eq.
+        - assert (Hbi_eq : bi * bi = b_norm * b_norm).
+          { rewrite Hbr_zero in Hb_norm_sq. lra. }
+          rewrite Hbi_eq. exact Hz_sq.
+        - assert (Hbi_eq2 : bi * bi = b_norm * b_norm).
+          { rewrite Hbr_zero in Hb_norm_sq. lra. }
+          nra.
         Open Scope C_scope.
       }
 
