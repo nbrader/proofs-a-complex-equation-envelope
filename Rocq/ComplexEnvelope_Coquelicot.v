@@ -337,6 +337,9 @@ Proof.
   destruct (compute_z_from_envelope b_norm cr ci Hon Hb_nonzero)
     as [z [Hz_nonneg Hz_sq]].
 
+  (* Destruct envelope condition for later use *)
+  destruct Hon as [Henv_eq Hbound].
+
   (* We know b_norm² = br² + bi² *)
   assert (Hb_norm_sq : (b_norm * b_norm = br * br + bi * bi)%R).
   { Close Scope C_scope.
@@ -380,7 +383,6 @@ Proof.
     assert (Hy_sq_nonneg : y_sq >= 0).
     {
       unfold y_sq, x.
-      destruct Hon as [Henv_eq _].
 
       (* From envelope equation with br = 0 *)
       replace (0 * 0 + bi * bi) with (bi * bi) in Hb_norm_sq by ring.
@@ -447,30 +449,44 @@ Proof.
         let x_val := - ci' / bi' in
         z_val * z_val - x_val * x_val = (bi' * bi') / 4).
       {
-        simpl.
-        destruct Hon as [Henv_eq _].
+        intros.
         simpl in Henv_eq.
-        replace (0 * 0 + bi' * bi') with (bi' * bi') in Hb_norm_sq by ring.
 
-        (* z² = bi²/2 - cr *)
-        rewrite sqrt_sqrt.
-        2:{ rewrite <- Hb_norm_sq. simpl. lra. }
+        (* Simplify using sqrt property and field tactics *)
+        (* Goal: sqrt(...) * sqrt(...) - x_val * x_val = bi'^2/4 *)
+        (* where x_val = -ci'/bi' *)
 
-        (* x² = ci²/bi² *)
-        (* z² - x² = (bi²/2 - cr) - ci²/bi² *)
-        replace ((bi' * bi') / 2 - cr' - (- ci' / bi') * (- ci' / bi'))
-          with (((bi' * bi') / 2 - cr') - (ci' * ci') / (bi' * bi'))
-          by (field; lra).
+        (* First prove intermediate for sqrt *)
+        assert (Hsqrt_pos : (bi' * bi') / 2 - cr' >= 0).
+        { rewrite Hb_norm_sq in Hbound. rewrite Hbr_zero in Hbound. lra. }
 
-        (* Use envelope: ci² = bi⁴/4 - bi²·cr *)
-        replace (ci' * ci') with
-          ((bi' * bi' * bi' * bi') / 4 - (bi' * bi') * cr')
-          by (rewrite <- Henv_eq; simpl; ring).
+        (* Use envelope: ci'^2 = bi'^4/4 - bi'^2*cr' *)
+        assert (Hci_eq : ci' * ci' = (bi' * bi' * bi' * bi') / 4 - (bi' * bi') * cr').
+        { (* From Henv_eq with b_norm^2 = bi'^2 (since br' = 0) *)
+          assert (Hb2_eq : (b_norm * b_norm)%R = (bi' * bi')%R).
+          { unfold b_norm. rewrite Hb_norm_sq. rewrite Hbr_zero. lra. }
+          assert (Hb4_eq : (b_norm * b_norm * b_norm * b_norm)%R = (bi' * bi' * bi' * bi')%R).
+          { transitivity ((b_norm * b_norm) * (b_norm * b_norm))%R.
+            - ring.
+            - rewrite Hb2_eq. ring. }
+          (* Transform Henv_eq: ci'^2 = b_norm^4/4 - b_norm^2*cr'
+             into: ci'*ci' = bi'^4/4 - bi'^2*cr' *)
+          simpl in Henv_eq.
+          unfold Rsqr in Henv_eq.
+          rewrite Hb4_eq in Henv_eq.
+          rewrite Hb2_eq in Henv_eq.
+          exact Henv_eq. }
 
-        (* Simplify *)
-        field_simplify; [| lra].
-        field.
-        lra.
+        (* Rewrite ci' using envelope *)
+        rewrite Hci_eq.
+
+        (* Simplify sqrt(...) * sqrt(...) = ... *)
+        rewrite sqrt_sqrt by lra.
+
+        (* Now simplify the algebraic expression *)
+        field_simplify.
+        - field.
+        - lra.
       }
 
       (* Therefore y = bi'/2 *)
