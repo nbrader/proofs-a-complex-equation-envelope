@@ -485,10 +485,7 @@ Proof.
   exists z_sq.
   split; [reflexivity | ].
   unfold z_sq.
-  apply Rge_minus.
-  unfold Rge.
-  right.
-  exact Hleq.
+  lra.
 Qed.
 
 (*

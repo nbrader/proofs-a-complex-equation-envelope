@@ -79,8 +79,8 @@ Definition has_solution (a b c : C) : Prop :=
 *)
 
 Theorem case_a_zero_b_nonzero : forall b c,
-  b <> C0 ->
-  has_solution C0 b c.
+  b <> RtoC 0 ->
+  has_solution (RtoC 0) b c.
 Proof.
   intros b c Hb_neq.
   unfold has_solution.
