@@ -389,12 +389,17 @@ Proof.
       assert (Hdisc : ((bi * bi) * z * z - ci * ci =
                       (bi * bi * bi * bi) / 4)%R).
       {
+        Close Scope C_scope.
         apply (envelope_implies_discriminant_nonneg bi cr ci z).
         - exact Hbi_nonzero.
-        - rewrite Hb_norm_sq. ring_simplify (0 * 0 + bi * bi). exact Hz_sq.
+        - rewrite Hbr_zero in Hb_norm_sq.
+          ring_simplify in Hb_norm_sq.
+          rewrite <- Hb_norm_sq.
+          exact Hz_sq.
         - unfold bi, ci, cr, b_norm in Henv_eq.
           rewrite Hb_norm_sq in Henv_eq. ring_simplify (0 * 0 + Im b_prime * Im b_prime) in Henv_eq.
           exact Henv_eq.
+        Open Scope C_scope.
       }
 
       (* Now y² = z² - ci²/bi² = (bi²·z² - ci²)/bi² = b⁴/4 / bi² ≥ 0 *)
