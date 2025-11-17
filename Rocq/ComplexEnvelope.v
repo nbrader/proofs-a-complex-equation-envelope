@@ -580,40 +580,16 @@ Proof.
 
   (* Goal: a *c E *c Cconj E +c (a *c b_prime) *c Cconj E +c (a *c c_prime) = Czero *)
 
-  (* We want to show this equals a *c (E *c Cconj E +c b_prime *c Cconj E +c c_prime) *)
-  (* which equals a *c Czero = Czero by Heq_norm *)
-
-  assert (Hfactor : a *c E *c Cconj E +c (a *c b_prime) *c Cconj E +c (a *c c_prime) =
-                    a *c (E *c Cconj E +c b_prime *c Cconj E +c c_prime)).
-  {
-    (* Prove that we can factor out a *)
-    rewrite Cmul_add_distr_l.
-    rewrite Cmul_add_distr_l.
-    f_equal.
-    - (* a *c E *c Cconj E = a *c (E *c Cconj E) *)
-      destruct a as [ar ai].
-      destruct E as [er ei].
-      unfold Cmul, Cconj, Cre, Cim.
-      simpl.
-      f_equal; ring.
-    - f_equal.
-      + (* (a *c b_prime) *c Cconj E = a *c (b_prime *c Cconj E) *)
-        destruct a as [ar ai].
-        destruct b_prime as [br bi].
-        destruct E as [er ei].
-        unfold Cmul, Cconj, Cre, Cim.
-        simpl.
-        f_equal; ring.
-      + reflexivity.
-  }
-
-  rewrite Hfactor.
-  rewrite Heq_norm.
-
-  (* Now show a *c Czero = Czero *)
+  (* Directly prove by unfolding *)
+  unfold equation in Heq_norm.
   destruct a as [ar ai].
-  unfold Cmul, Czero, Cre, Cim.
-  simpl.
+  destruct E as [er ei].
+  destruct b_prime as [br bi].
+  destruct c_prime as [cr ci].
+  unfold Cmul, Cadd, Cconj, Czero, Cre, Cim, Cscale in *.
+  simpl in *.
+  injection Heq_norm as Heq_norm_re Heq_norm_im.
+  rewrite Heq_norm_re, Heq_norm_im.
   f_equal; ring.
 Qed.
 

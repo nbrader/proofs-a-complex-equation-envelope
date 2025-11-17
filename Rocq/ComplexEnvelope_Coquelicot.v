@@ -210,7 +210,7 @@ Proof.
   intros b_norm c_x c_y [Heq Hleq].
   unfold on_envelope.
   split.
-  - field_simplify. rewrite <- Heq. ring.
+  - rewrite <- Heq. field_simplify. nra.
   - exact Hleq.
 Qed.
 
