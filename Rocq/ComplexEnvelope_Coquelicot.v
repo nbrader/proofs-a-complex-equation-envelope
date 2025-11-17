@@ -342,13 +342,13 @@ Proof.
   { Close Scope C_scope.
     unfold b_norm, Cmod, br, bi.
     destruct b_prime as [r i]. simpl.
-    rewrite Rsqr_sqrt by (apply Rplus_le_le_0_compat; apply Rle_0_sqr).
+    rewrite sqrt_sqrt by nra.
     ring.
     Open Scope C_scope.
   }
 
   (* At least one of br, bi is nonzero *)
-  assert (Hb_sq_nonzero : br * br + bi * bi <> 0).
+  assert (Hb_sq_nonzero : (br * br + bi * bi <> 0)%R).
   {
     rewrite <- Hb_norm_sq.
     unfold b_norm.
@@ -361,12 +361,12 @@ Proof.
 
   - (* Case: br = 0, so bi ≠ 0 *)
     subst br.
-    assert (Hbi_nonzero : bi <> 0).
-    {
+    assert (Hbi_nonzero : (bi <> 0)%R).
+    { Close Scope C_scope.
       intro Hcontra.
-      assert (Re b_prime * Re b_prime + bi * bi = 0).
-      { rewrite Hbr_zero, Hcontra. ring. }
-      contradiction.
+      apply Hb_sq_nonzero.
+      rewrite Hbr_zero, Hcontra. lra.
+      Open Scope C_scope.
     }
 
     (* From imaginary constraint: bi·x - 0·y = -ci, so x = -ci/bi *)
@@ -386,8 +386,8 @@ Proof.
       replace (0 * 0 + bi * bi) with (bi * bi) in Hb_norm_sq by ring.
 
       (* Use envelope_implies_discriminant_nonneg *)
-      assert (Hdisc : (bi * bi) * z * z - ci * ci =
-                      (bi * bi * bi * bi) / 4).
+      assert (Hdisc : ((bi * bi) * z * z - ci * ci =
+                      (bi * bi * bi * bi) / 4)%R).
       {
         apply (envelope_implies_discriminant_nonneg bi cr ci z).
         - exact Hbi_nonzero.
@@ -933,7 +933,7 @@ Proof.
   { Close Scope C_scope.
     unfold b_norm, Cmod, br, bi.
     destruct b_prime as [r i]. simpl.
-    rewrite Rsqr_sqrt by (apply Rplus_le_le_0_compat; apply Rle_0_sqr).
+    rewrite sqrt_sqrt by nra.
     ring.
     Open Scope C_scope.
   }
