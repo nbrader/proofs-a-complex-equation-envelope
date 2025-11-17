@@ -408,22 +408,19 @@ Proof.
       replace (z * z - (- ci / bi) * (- ci / bi))
         with ((bi * bi * z * z - ci * ci) / (bi * bi)).
       2: { field_simplify; [reflexivity | exact Hbi_nonzero | exact Hbi_nonzero]. }
-      Open Scope C_scope.
 
       rewrite Hdisc.
-      apply Rmult_le_pos.
-      + apply Rmult_le_pos; [| apply Rlt_le, Rinv_0_lt_compat].
-        * apply Rmult_le_pos; apply Rle_0_sqr.
-        * apply Rmult_lt_0_compat; lra.
-      + apply Rlt_le, Rinv_0_lt_compat.
-        apply Rmult_lt_0_compat; lra.
+      replace ((bi * bi * bi * bi / 4) / (bi * bi))
+        with ((bi * bi) / 4) by (field; exact Hbi_nonzero).
+      nra.
+      Open Scope C_scope.
     }
 
     set (y := sqrt y_sq).
 
     exists (x, y).
 
-    unfold equation, 1, Cmult, Cplus, Cconj, 0.
+    unfold equation, Cmult, Cplus, Cconj.
     simpl.
 
     (* We need to verify both real and imaginary parts equal 0 *)
@@ -434,7 +431,7 @@ Proof.
       unfold y, y_sq, x.
 
       (* Unfold to get concrete values *)
-      unfold br, bi, cr, ci, b_norm, z in *.
+      unfold bi, cr, ci, b_norm in *.
       destruct b_prime as [br' bi']. destruct c_prime as [cr' ci'].
       simpl in *.
 
@@ -456,7 +453,7 @@ Proof.
         replace (0 * 0 + bi' * bi') with (bi' * bi') in Hb_norm_sq by ring.
 
         (* z² = bi²/2 - cr *)
-        rewrite Rsqr_sqrt.
+        rewrite sqrt_sqrt.
         2:{ rewrite <- Hb_norm_sq. simpl. lra. }
 
         (* x² = ci²/bi² *)
