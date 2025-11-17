@@ -45,6 +45,10 @@ Open Scope R_scope.
 (* Import Coquelicot's complex number notations *)
 Local Open Scope C_scope.
 
+Definition C0 : C := (0%R, 0%R).
+Definition C1 : C := (1%R, 0%R).
+Definition Ci : C := (0%R, 1%R).
+
 (*
   ==============================================================================
   THE MAIN EQUATION
@@ -444,12 +448,11 @@ Proof.
       (* Since y = sqrt(y_sq) and y_sq = z² - x², we have x² + y² = z² *)
 
       (* First show that y² = bi'²/4 *)
+      set (z_val := sqrt ((bi' * bi') / 2 - cr')).
+      set (x_val := (- ci' / bi')%R).
       assert (Hy_sq_value :
-        let z_val := sqrt ((bi' * bi') / 2 - cr') in
-        let x_val := - ci' / bi' in
-        z_val * z_val - x_val * x_val = (bi' * bi') / 4).
+        (z_val * z_val - x_val * x_val)%R = ((bi' * bi') / 4)%R).
       {
-        intros.
         simpl in Henv_eq.
 
         (* Simplify using sqrt property and field tactics *)
@@ -484,13 +487,11 @@ Proof.
         (*  Goal: z_val^2 - x_val^2 = bi'^2/4 where z_val = sqrt(...), x_val = -ci'/bi' *)
         simpl.
         (* Replace z_val^2 with (bi'^2/2 - cr') using sqrt_sqrt *)
-        replace (let z_val := sqrt ((bi' * bi') / 2 - cr') in z_val * z_val)
-          with ((bi' * bi') / 2 - cr').
-        2: { simpl. symmetry. apply sqrt_sqrt. lra. }
+        replace (z_val * z_val)%R with ((bi' * bi') / 2 - cr').
+        2: { subst z_val. symmetry. apply sqrt_sqrt. lra. }
         (* Replace x_val^2 with ci'^2/bi'^2 *)
-        replace (let x_val := - ci' / bi' in x_val * x_val)
-          with (ci' * ci' / (bi' * bi')).
-        2: { simpl. field. lra. }
+        replace (x_val * x_val)%R with (ci' * ci' / (bi' * bi')).
+        2: { subst x_val. field. lra. }
         (* Now goal: (bi'^2/2 - cr') - ci'^2/bi'^2 = bi'^2/4 *)
         (* Substitute ci'^2 using Hci_eq: ci'^2 = bi'^4/4 - bi'^2*cr' *)
         assert (Hgoal : (bi' * bi') / 2 - cr' - ci' * ci' / (bi' * bi') = (bi' * bi') / 4).
@@ -503,7 +504,7 @@ Proof.
       {
         unfold y_sq.
         apply Rsqr_inj; [apply sqrt_pos | lra |].
-        rewrite Rsqr_sqrt; [| lra].
+        rewrite Rsqr_sqrt; [| exact Hy_sq_nonneg].
         simpl in Hy_sq_value.
         exact Hy_sq_value.
       }
