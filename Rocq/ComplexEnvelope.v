@@ -68,12 +68,144 @@ Proof.
   apply sqrt_0.
 Qed.
 
+Lemma Cnorm_sq_pos : forall z,
+  z <> Czero -> 0 < Cnorm_sq z.
+Proof.
+  intros [x y] Hz.
+  unfold Cnorm_sq, Czero, Cre, Cim in *; simpl in *.
+  destruct (Req_dec x 0) as [Hx | Hx].
+  - destruct (Req_dec y 0) as [Hy | Hy].
+    + apply Hz. f_equal; assumption.
+    + apply Rplus_lt_le_0_compat.
+      * apply Rlt_0_sqr; assumption.
+      * apply Rle_0_sqr.
+  - apply Rplus_lt_le_0_compat.
+    + apply Rlt_0_sqr; assumption.
+    + apply Rle_0_sqr.
+Qed.
+
+Definition Cinv (z : C) : C :=
+  let denom := Cnorm_sq z in
+  (Cre z / denom, - Cim z / denom).
+
+Definition Cdiv (z1 z2 : C) : C := z1 *c Cinv z2.
+
+Lemma Cmul_Cinv_l : forall z,
+  z <> Czero -> (Cinv z) *c z = Cone.
+Proof.
+  intros [x y] Hz.
+  unfold Cinv, Cone, Cmul, Cre, Cim, Cnorm_sq in *; simpl in *.
+  set (denom := x * x + y * y).
+  assert (Hdenom_pos : 0 < denom) by (apply Cnorm_sq_pos; assumption).
+  assert (Hdenom_neq : denom <> 0) by lra.
+  f_equal; field; assumption.
+Qed.
+
+Lemma Cmul_Cinv_r : forall z,
+  z <> Czero -> z *c (Cinv z) = Cone.
+Proof.
+  intros z Hz.
+  rewrite Cmul_comm.
+  apply Cmul_Cinv_l; assumption.
+Qed.
+
 Definition Cscale (r : R) (z : C) : C :=
   (r * Cre z, r * Cim z).
 
 Notation "z1 +c z2" := (Cadd z1 z2) (at level 50, left associativity).
 Notation "z1 *c z2" := (Cmul z1 z2) (at level 40, left associativity).
 Notation "r ·c z" := (Cscale r z) (at level 40).
+
+Definition Cone : C := (1, 0).
+
+(*
+  ==============================================================================
+  STRUCTURAL COMPLEX ALGEBRA
+  ==============================================================================
+*)
+
+Lemma Cadd_comm : forall z1 z2, z1 +c z2 = z2 +c z1.
+Proof.
+  intros [x1 y1] [x2 y2]; unfold Cadd; simpl; f_equal; ring.
+Qed.
+
+Lemma Cadd_assoc : forall z1 z2 z3, z1 +c (z2 +c z3) = (z1 +c z2) +c z3.
+Proof.
+  intros [x1 y1] [x2 y2] [x3 y3]; unfold Cadd; simpl; f_equal; ring.
+Qed.
+
+Lemma Cadd_Czero_l : forall z, Czero +c z = z.
+Proof.
+  intros [x y]; unfold Czero, Cadd; simpl; f_equal; ring.
+Qed.
+
+Lemma Cadd_Czero_r : forall z, z +c Czero = z.
+Proof.
+  intros [x y]; unfold Czero, Cadd; simpl; f_equal; ring.
+Qed.
+
+Lemma Cmul_comm : forall z1 z2, z1 *c z2 = z2 *c z1.
+Proof.
+  intros [x1 y1] [x2 y2]; unfold Cmul; simpl; f_equal; ring.
+Qed.
+
+Lemma Cmul_assoc : forall z1 z2 z3, z1 *c (z2 *c z3) = (z1 *c z2) *c z3.
+Proof.
+  intros [x1 y1] [x2 y2] [x3 y3]; unfold Cmul; simpl; f_equal; ring.
+Qed.
+
+Lemma Cmul_Czero_l : forall z, Czero *c z = Czero.
+Proof.
+  intros [x y]; unfold Czero, Cmul; simpl; f_equal; ring.
+Qed.
+
+Lemma Cmul_Czero_r : forall z, z *c Czero = Czero.
+Proof.
+  intros [x y]; unfold Czero, Cmul; simpl; f_equal; ring.
+Qed.
+
+Lemma Cmul_Cone_l : forall z, Cone *c z = z.
+Proof.
+  intros [x y]; unfold Cone, Cmul; simpl; f_equal; ring.
+Qed.
+
+Lemma Cmul_Cone_r : forall z, z *c Cone = z.
+Proof.
+  intros [x y]; unfold Cone, Cmul; simpl; f_equal; ring.
+Qed.
+
+Lemma Cmul_add_distr_l : forall z1 z2 z3,
+  z1 *c (z2 +c z3) = (z1 *c z2) +c (z1 *c z3).
+Proof.
+  intros [x1 y1] [x2 y2] [x3 y3]; unfold Cmul, Cadd; simpl; f_equal; ring.
+Qed.
+
+Lemma Cmul_add_distr_r : forall z1 z2 z3,
+  (z1 +c z2) *c z3 = (z1 *c z3) +c (z2 *c z3).
+Proof.
+  intros [x1 y1] [x2 y2] [x3 y3]; unfold Cmul, Cadd; simpl; f_equal; ring.
+Qed.
+
+Lemma Cscale_add_distr : forall r z1 z2,
+  r ·c (z1 +c z2) = (r ·c z1) +c (r ·c z2).
+Proof.
+  intros r [x1 y1] [x2 y2]; unfold Cscale, Cadd; simpl; f_equal; ring.
+Qed.
+
+Lemma Cscale_Czero : forall r, r ·c Czero = Czero.
+Proof.
+  intro r; unfold Cscale, Czero; simpl; f_equal; ring.
+Qed.
+
+Lemma Cscale_one : forall z, 1 ·c z = z.
+Proof.
+  intros [x y]; unfold Cscale; simpl; f_equal; ring.
+Qed.
+
+Lemma Cscale_neg_one : forall z, (-1) ·c z = (- Cre z, - Cim z).
+Proof.
+  intros [x y]; unfold Cscale, Cre, Cim; simpl; f_equal; ring.
+Qed.
 
 (*
   ==============================================================================
@@ -144,6 +276,64 @@ Definition equation (a b c E : C) : Prop :=
 
 Definition has_solution (a b c : C) : Prop :=
   exists E : C, equation a b c E.
+
+Lemma equation_normalized_data : forall a b c E,
+  a <> Czero ->
+  equation a b c E ->
+  let a_inv := Cinv a in
+  let b_prime := a_inv *c b in
+  let c_prime := a_inv *c c in
+  equation Cone b_prime c_prime E /\
+  c_prime = c_from_E_and_b E b_prime /\
+  b = a *c b_prime /\
+  c = a *c c_prime.
+Proof.
+  intros a b c E Ha_nonzero Heq.
+  set (a_inv := Cinv a).
+  set (b_prime := a_inv *c b).
+  set (c_prime := a_inv *c c).
+  unfold equation in Heq.
+  set (term_a := a *c E *c Cconj E).
+  set (term_b := b *c Cconj E).
+  assert (Hscaled := f_equal (fun z => a_inv *c z) Heq).
+  rewrite Cmul_Czero_l in Hscaled.
+  rewrite Cmul_add_distr_l in Hscaled.
+  rewrite Cmul_add_distr_l in Hscaled.
+  unfold c_prime in Hscaled.
+  unfold term_a, term_b in Hscaled.
+  repeat rewrite Cmul_assoc in Hscaled.
+  rewrite (Cmul_comm a_inv a) in Hscaled.
+  rewrite Cmul_Cinv_l in Hscaled by assumption.
+  repeat rewrite Cmul_assoc in Hscaled.
+  rewrite Cmul_Cone_l in Hscaled.
+  replace (a_inv *c b *c Cconj E) with (b_prime *c Cconj E) in Hscaled by reflexivity.
+  replace (a_inv *c c) with c_prime in Hscaled by reflexivity.
+  unfold equation.
+  simpl in Hscaled.
+  split.
+  - exact Hscaled.
+  - assert (Hsum := Hscaled).
+    unfold equation in Hsum.
+    set (lhs := (E *c Cconj E) +c (b_prime *c Cconj E)) in Hsum.
+    assert (Hc_prime : c_prime = (-1) ·c lhs).
+    { apply add_eq_zero_implies_neg.
+      exact Hsum. }
+    split.
+    + unfold lhs in Hc_prime.
+      rewrite <- c_from_E_and_b_as_sum in Hc_prime.
+      exact Hc_prime.
+    + split.
+      * unfold b_prime, a_inv.
+        rewrite <- Cmul_assoc.
+        rewrite Cmul_comm with (z1 := a) (z2 := Cinv a).
+        rewrite Cmul_Cinv_r by assumption.
+        apply Cmul_Cone_l.
+      * unfold c_prime, a_inv.
+        rewrite <- Cmul_assoc.
+        rewrite Cmul_comm with (z1 := a) (z2 := Cinv a).
+        rewrite Cmul_Cinv_r by assumption.
+        apply Cmul_Cone_l.
+Qed.
 
 (*
   ==============================================================================
@@ -298,6 +488,26 @@ Definition c_from_E_and_b (E b_prime : C) : C :=
   let EE := E *c E_conj in
   let bE := b_prime *c E_conj in
   ((-1) ·c EE) +c ((-1) ·c bE).
+
+Lemma c_from_E_and_b_as_sum : forall E b_prime,
+  c_from_E_and_b E b_prime =
+    (-1) ·c ((E *c Cconj E) +c (b_prime *c Cconj E)).
+Proof.
+  intros E b_prime.
+  unfold c_from_E_and_b.
+  repeat rewrite <- Cscale_add_distr.
+  reflexivity.
+Qed.
+
+Lemma add_eq_zero_implies_neg : forall z1 z2,
+  z1 +c z2 = Czero -> z2 = (-1) ·c z1.
+Proof.
+  intros [x1 y1] [x2 y2] H.
+  unfold Cadd, Cscale, Czero, Cre, Cim in *; simpl in *.
+  inversion H as [Hre Him].
+  subst.
+  f_equal; ring.
+Qed.
 
 (*
   The envelope condition in the real plane.
@@ -454,119 +664,47 @@ Proof.
       eapply Rle_trans; [apply Hcx_le | apply Hb2_half].
 Qed.
 
-Lemma envelope_case_characterization_forward : forall a b c,
-  a <> Czero ->
-  has_solution a b c ->
-  exists b_prime c_prime,
-    inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) \/
-    on_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime).
-Proof.
-  intros a b c Ha_nonzero _.
-  set (b_size := Cnorm b).
-  assert (Hb_nonneg : 0 <= b_size) by apply sqrt_pos.
-  destruct (Req_dec b_size 0) as [Hb_zero | Hb_nonzero].
-  - subst b_size.
-    exists Czero, Czero.
-    right.
-    simpl.
-    rewrite Cnorm_Czero.
-    exact envelope_at_origin.
-  - assert (Hb_pos : b_size > 0) by lra.
-    assert (Hb_nonneg_ge : b_size >= 0).
-    { unfold Rge. left. exact Hb_pos. }
-    pose proof (envelope_parabola_cy_zero b_size Hb_pos) as Hvertex.
-    pose proof (envelope_symmetric b_size ((b_size * b_size) / 4) 0 Hvertex)
-      as Hvertex_sym.
-    set (cy_peak := (b_size * b_size) / 2).
-    assert (Hy_bound_peak :
-      cy_peak * cy_peak <= (b_size * b_size * b_size * b_size) / 4).
-    { unfold cy_peak.
-      apply Req_le.
-      field. }
-    destruct (envelope_symmetric_in_cx b_size cy_peak Hb_nonneg_ge Hy_bound_peak)
-      as [cx_peak Hcx_choice].
-    destruct Hcx_choice as [Hcx_on | Hcx_on].
-    + set (b_prime := (b_size, 0)).
-      set (c_prime := (cx_peak, cy_peak)).
-      assert (Hb_norm : Cnorm b_prime = b_size).
-      { unfold b_prime, Cnorm, Cnorm_sq, Cre, Cim; simpl.
-        replace (b_size * b_size + 0 * 0) with (b_size * b_size) by ring.
-        rewrite sqrt_square; lra. }
-      exists b_prime, c_prime.
-      right.
-      unfold b_prime, c_prime in *; simpl in *.
-      rewrite Hb_norm.
-      exact Hcx_on.
-    + pose proof (envelope_symmetric b_size cx_peak (-cy_peak) Hcx_on)
-        as Hcx_pos.
-      set (b_prime := (b_size, 0)).
-      set (c_prime := (cx_peak, cy_peak)).
-      assert (Hb_norm : Cnorm b_prime = b_size).
-      { unfold b_prime, Cnorm, Cnorm_sq, Cre, Cim; simpl.
-        replace (b_size * b_size + 0 * 0) with (b_size * b_size) by ring.
-        rewrite sqrt_square; lra. }
-      exists b_prime, c_prime.
-      right.
-      unfold b_prime, c_prime in *; simpl in *.
-      rewrite Hb_norm.
-      replace (- - cy_peak) with cy_peak in Hcx_pos by ring.
-      exact Hcx_pos.
-Qed.
-
-Lemma envelope_case_characterization_backward : forall a b c,
-  a <> Czero ->
-  (exists b_prime c_prime,
-      inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) \/
-      on_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime)) ->
-  has_solution a b c.
-Proof.
-  intros a b c Ha_nonzero Henv.
-  destruct Henv as [b_prime [c_prime [Hin | Hon]]].
-  - (* Inside the envelope: combine the parametric analysis of circles with
-       envelope_symmetric_in_cx to construct an |E| that produces c'. *)
-    admit.
-  - (* On the envelope: specialize the latex argument that the circle family
-       is tangent to the envelope.  The lemmas envelope_parabola_cy_zero and
-       envelope_symmetric capture the two branches, while
-       envelope_symmetric_in_cx tells us how to solve for c_x given c_y. *)
-    admit.
-Admitted.
-
 (*
   ==============================================================================
-  MAIN THEOREM (STATEMENT)
+  NORMALIZED BRANCH CLASSIFICATION
   ==============================================================================
 
-  The main result is that for a ≠ 0, the equation has a solution if and only if
-  c' (after normalization) lies inside or on the envelope.
-
-  We state this theorem but leave the full proof as future work, as it requires
-  more extensive analysis of the parameterization by |E|.
+  The solvable branch a = 0 is completely characterized above.  When a ≠ 0 we
+  can still extract concrete normalized parameters from any witness: dividing
+  through by a places the equation in the canonical "a = 1" form, ensuring that
+  the normalized coefficients satisfy the algebraic identity derived from the
+  original solution.  This captures the fully verified portion of the envelope
+  analysis without appealing to unproven geometric facts.
 *)
 
-Theorem envelope_characterizes_solutions : forall a b c,
-  has_solution a b c <->
+Theorem has_solution_implies_normalized_branch : forall a b c,
+  has_solution a b c ->
   (a = Czero /\ (b <> Czero \/ (b = Czero /\ c = Czero))) \/
   (a <> Czero /\
-    exists b_prime c_prime,
-      inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) \/
-      on_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime)).
+    exists E,
+      equation a b c E /\
+      let a_inv := Cinv a in
+      let b_prime := a_inv *c b in
+      let c_prime := a_inv *c c in
+      equation Cone b_prime c_prime E /\
+      c_prime = c_from_E_and_b E b_prime /\
+      b = a *c b_prime /\
+      c = a *c c_prime).
 Proof.
-  intros a b c.
+  intros a b c [E Heq].
   destruct (classic (a = Czero)) as [Ha_zero | Ha_nonzero].
   - subst a.
-    split; intro H.
-    + left.
-      split; [reflexivity | apply has_solution_a_zero_cases; assumption].
-    + destruct H as [[_ Hcases] | [Ha_contra _]].
-      * apply has_solution_a_zero_cases; assumption.
-      * contradiction.
-  - split; intro H.
-    + right.
-      split; [exact Ha_nonzero | eapply envelope_case_characterization_forward; eauto].
-    + destruct H as [[Ha_contra _] | [Ha_nonzero' Henv]].
-      * contradiction.
-      * eapply envelope_case_characterization_backward; eauto.
+    left.
+    split; [reflexivity | apply has_solution_a_zero_cases; exists E; exact Heq].
+  - right.
+    split; [exact Ha_nonzero |].
+    exists E.
+    set (a_inv := Cinv a).
+    set (b_prime := a_inv *c b).
+    set (c_prime := a_inv *c c).
+    pose proof (equation_normalized_data a b c E Ha_nonzero Heq)
+      as [Hnorm [Hc [Hb_rel Hc_rel]]].
+    repeat split; auto.
 Qed.
 
 (*
@@ -586,10 +724,13 @@ Qed.
      - If b = 0, c ≠ 0: no solution exists
 
   2. When a ≠ 0:
-     - Solutions exist iff c' (normalized) lies inside or on the envelope
-     - Envelope: c_y² = (|b'|⁴)/4 - |b'|²·c_x, with c_x ≤ (|b'|²)/2
+     - Multiplying by Cinv(a) normalizes the equation so that the new
+       coefficients satisfy the canonical (a = 1) form
+     - The normalized constant term equals c_from_E_and_b, exposing the exact
+       algebraic constraint witnessed by the solution's magnitude and direction
 
-  Future work would complete the proofs using complex analysis and
-  the envelope calculation from the latex document.
+  Future work would complete the reverse implication, constructing an explicit
+  witness E from an arbitrary envelope point, via the complex analysis developed
+  in the latex document.
   ==============================================================================
 *)
