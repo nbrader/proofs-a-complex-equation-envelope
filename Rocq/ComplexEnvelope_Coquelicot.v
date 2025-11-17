@@ -182,9 +182,9 @@ Qed.
 *)
 
 Definition on_envelope (b_norm c_x c_y : R) : Prop :=
-  c_y * c_y = (b_norm * b_norm * b_norm * b_norm) / 4 -
-              (b_norm * b_norm) * c_x /\
-  c_x <= (b_norm * b_norm) / 2.
+  (c_y * c_y = (b_norm * b_norm * b_norm * b_norm) / 4 -
+              (b_norm * b_norm) * c_x)%R /\
+  (c_x <= (b_norm * b_norm) / 2)%R.
 
 Definition inside_envelope (b_norm c_x c_y : R) : Prop :=
   c_y * c_y < (b_norm * b_norm * b_norm * b_norm) / 4 -
@@ -203,16 +203,20 @@ Proof.
   apply Rmult_opp_opp.
 Qed.
 
+Close Scope C_scope.
+
 Lemma envelope_symmetric : forall b_norm c_x c_y,
   on_envelope b_norm c_x c_y ->
   on_envelope b_norm c_x (-c_y).
 Proof.
   intros b_norm c_x c_y [Heq Hleq].
   unfold on_envelope.
-  split.
-  - rewrite <- Heq. field_simplify. nra.
-  - exact Hleq.
+  split; [| exact Hleq].
+  rewrite Rmult_opp_opp.
+  exact Heq.
 Qed.
+
+Open Scope C_scope.
 
 Lemma envelope_at_origin :
   on_envelope 0 0 0.
