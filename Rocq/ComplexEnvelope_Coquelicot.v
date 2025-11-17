@@ -397,14 +397,18 @@ Proof.
           rewrite Hbi_eq. exact Hz_sq.
         - assert (Hbi_eq2 : bi * bi = b_norm * b_norm).
           { rewrite Hbr_zero in Hb_norm_sq. lra. }
-          nra.
+          assert (Hbi_eq4 : bi * bi * bi * bi = b_norm * b_norm * b_norm * b_norm).
+          { nra. }
+          rewrite Hbi_eq4, Hbi_eq2. exact Henv_eq.
         Open Scope C_scope.
       }
 
       (* Now y² = z² - ci²/bi² = (bi²·z² - ci²)/bi² = b⁴/4 / bi² ≥ 0 *)
       replace (z * z - (- ci / bi) * (- ci / bi))
         with ((bi * bi * z * z - ci * ci) / (bi * bi)).
-      2: { field. lra. }
+      2: { Close Scope C_scope.
+           field_simplify; [reflexivity | exact Hbi_nonzero].
+           Open Scope C_scope. }
 
       rewrite Hdisc.
       apply Rmult_le_pos.
