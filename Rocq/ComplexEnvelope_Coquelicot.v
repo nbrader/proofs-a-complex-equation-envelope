@@ -460,6 +460,9 @@ Proof.
         assert (Hsqrt_pos : (bi' * bi') / 2 - cr' >= 0).
         { rewrite Hb_norm_sq in Hbound. rewrite Hbr_zero in Hbound. lra. }
 
+        (* Work in R_scope for envelope transformation *)
+        Close Scope C_scope.
+
         (* Use envelope: ci'^2 = bi'^4/4 - bi'^2*cr' *)
         assert (Hci_eq : ci' * ci' = (bi' * bi' * bi' * bi') / 4 - (bi' * bi') * cr').
         { (* From Henv_eq with b_norm^2 = bi'^2 (since br' = 0) *)
@@ -469,24 +472,30 @@ Proof.
           { transitivity ((b_norm * b_norm) * (b_norm * b_norm))%R.
             - ring.
             - rewrite Hb2_eq. ring. }
-          (* Transform Henv_eq: ci'^2 = b_norm^4/4 - b_norm^2*cr'
-             into: ci'*ci' = bi'^4/4 - bi'^2*cr' *)
-          simpl in Henv_eq.
-          unfold Rsqr in Henv_eq.
-          rewrite Hb4_eq in Henv_eq.
-          rewrite Hb2_eq in Henv_eq.
-          exact Henv_eq. }
+          (* Use transitivity: ci'^2 = b_norm^4/4 - b_norm^2*cr' = bi'^4/4 - bi'^2*cr' *)
+          transitivity (b_norm * b_norm * b_norm * b_norm / 4 - b_norm * b_norm * cr').
+          - simpl in Henv_eq. unfold Rsqr in Henv_eq.
+            (* Fold b_norm back into Henv_eq *)
+            fold b_norm in Henv_eq.
+            exact Henv_eq.
+          - rewrite Hb4_eq, Hb2_eq. reflexivity. }
 
-        (* Rewrite ci' using envelope *)
-        rewrite Hci_eq.
-
-        (* Simplify sqrt(...) * sqrt(...) = ... *)
-        rewrite sqrt_sqrt by lra.
-
-        (* Now simplify the algebraic expression *)
-        field_simplify.
-        - field.
-        - lra.
+        (* Manual stepwise proof *)
+        (*  Goal: z_val^2 - x_val^2 = bi'^2/4 where z_val = sqrt(...), x_val = -ci'/bi' *)
+        simpl.
+        (* Replace z_val^2 with (bi'^2/2 - cr') using sqrt_sqrt *)
+        replace (let z_val := sqrt ((bi' * bi') / 2 - cr') in z_val * z_val)
+          with ((bi' * bi') / 2 - cr').
+        2: { simpl. symmetry. apply sqrt_sqrt. lra. }
+        (* Replace x_val^2 with ci'^2/bi'^2 *)
+        replace (let x_val := - ci' / bi' in x_val * x_val)
+          with (ci' * ci' / (bi' * bi')).
+        2: { simpl. field. lra. }
+        (* Now goal: (bi'^2/2 - cr') - ci'^2/bi'^2 = bi'^2/4 *)
+        (* Substitute ci'^2 using Hci_eq: ci'^2 = bi'^4/4 - bi'^2*cr' *)
+        assert (Hgoal : (bi' * bi') / 2 - cr' - ci' * ci' / (bi' * bi') = (bi' * bi') / 4).
+        { rewrite Hci_eq. field; lra. }
+        exact Hgoal.
       }
 
       (* Therefore y = bi'/2 *)
