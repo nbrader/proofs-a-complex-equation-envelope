@@ -485,10 +485,7 @@ Proof.
   exists z_sq.
   split; [reflexivity | ].
   unfold z_sq.
-  apply Rge_minus.
-  unfold Rge.
-  right.
-  exact Hleq.
+  lra.
 Qed.
 
 (*
@@ -500,11 +497,9 @@ Qed.
   Special case: When b_prime = 0 and c_prime = 0.
 *)
 
-Lemma construct_E_zero_case : forall E : C,
-  equation (1, 0) Czero Czero E.
+Lemma construct_E_zero_case :
+  equation (1, 0) Czero Czero Czero.
 Proof.
-  intro E.
-  destruct E as [x y].
   unfold equation, Cmul, Cadd, Czero, Cconj, Cscale, Cre, Cim.
   simpl.
   f_equal; ring.
