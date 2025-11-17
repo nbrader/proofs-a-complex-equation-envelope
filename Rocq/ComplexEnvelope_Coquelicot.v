@@ -245,6 +245,8 @@ Qed.
   4. Construct E = z · E_dir
 *)
 
+Close Scope C_scope.
+
 Lemma compute_z_from_envelope : forall b_norm c_x c_y,
   on_envelope b_norm c_x c_y ->
   b_norm <> 0 ->
@@ -262,7 +264,7 @@ Proof.
   exists (sqrt z_sq).
   split.
   - apply Rle_ge. apply sqrt_pos.
-  - unfold z_sq. symmetry. apply Rsqr_sqrt. lra.
+  - unfold z_sq. apply sqrt_sqrt. lra.
 Qed.
 
 Lemma compute_z_from_inside_envelope : forall b_norm c_x c_y,
@@ -282,7 +284,7 @@ Proof.
   exists (sqrt z_sq).
   split.
   - apply Rle_ge. apply sqrt_pos.
-  - unfold z_sq. symmetry. apply Rsqr_sqrt. lra.
+  - unfold z_sq. apply sqrt_sqrt. lra.
 Qed.
 
 (*
@@ -312,8 +314,10 @@ Lemma envelope_implies_discriminant_nonneg : forall b_norm cr ci z,
   (b_norm * b_norm) * z * z - ci * ci = (b_norm * b_norm * b_norm * b_norm) / 4.
 Proof.
   intros b_norm cr ci z Hb_nonzero Hz_sq Henv_eq.
-  rewrite Hz_sq, Henv_eq. field. lra.
+  nra.
 Qed.
+
+Open Scope C_scope.
 
 Lemma construct_E_from_envelope_point : forall b_prime c_prime,
   Cmod b_prime <> 0 ->
@@ -334,11 +338,13 @@ Proof.
     as [z [Hz_nonneg Hz_sq]].
 
   (* We know b_norm² = br² + bi² *)
-  assert (Hb_norm_sq : b_norm * b_norm = br * br + bi * bi).
-  {
+  assert (Hb_norm_sq : (b_norm * b_norm = br * br + bi * bi)%R).
+  { Close Scope C_scope.
     unfold b_norm, Cmod, br, bi.
     destruct b_prime as [r i]. simpl.
-    symmetry. apply Rsqr_sqrt. apply Rplus_le_le_0_compat; apply Rle_0_sqr.
+    rewrite Rsqr_sqrt by (apply Rplus_le_le_0_compat; apply Rle_0_sqr).
+    ring.
+    Open Scope C_scope.
   }
 
   (* At least one of br, bi is nonzero *)
@@ -923,11 +929,13 @@ Proof.
     as [z [Hz_nonneg Hz_sq]].
 
   (* We know b_norm² = br² + bi² *)
-  assert (Hb_norm_sq : b_norm * b_norm = br * br + bi * bi).
-  {
+  assert (Hb_norm_sq : (b_norm * b_norm = br * br + bi * bi)%R).
+  { Close Scope C_scope.
     unfold b_norm, Cmod, br, bi.
     destruct b_prime as [r i]. simpl.
-    symmetry. apply Rsqr_sqrt. apply Rplus_le_le_0_compat; apply Rle_0_sqr.
+    rewrite Rsqr_sqrt by (apply Rplus_le_le_0_compat; apply Rle_0_sqr).
+    ring.
+    Open Scope C_scope.
   }
 
   (* At least one of br, bi is nonzero *)
