@@ -774,12 +774,12 @@ Proof.
   rewrite Cmul_add_distr_r in Hscaled.
   rewrite <- Cmul_assoc in Hscaled.
   rewrite (Cinv_cancel_left a E Ha_nonzero) in Hscaled.
-  rewrite Cmul_assoc in Hscaled.
-  rewrite (Cmul_comm (Cinv a) b) in Hscaled.
-  rewrite (Cmul_comm (Cinv a) c) in Hscaled.
   unfold equation.
   unfold Cdiv.
   rewrite Cmul_Cone_l.
+  rewrite Cmul_comm with (z1 := b) (z2 := Cinv a).
+  rewrite Cmul_assoc.
+  rewrite Cmul_comm with (z1 := c) (z2 := Cinv a).
   exact Hscaled.
 Qed.
 
