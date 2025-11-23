@@ -316,6 +316,9 @@ Lemma envelope_implies_discriminant_nonneg : forall b_norm cr ci z,
   z * z = (b_norm * b_norm) / 2 - cr ->
   ci * ci = (b_norm * b_norm * b_norm * b_norm) / 4 - (b_norm * b_norm) * cr ->
   (b_norm * b_norm) * z * z - ci * ci = (b_norm * b_norm * b_norm * b_norm) / 4.
+(* After choosing z via IVT (compute_z_from_envelope), this algebra shows
+   the discriminant of the quadratic in the real coordinates is non-negative,
+   guaranteeing the line-circle system has real solutions. *)
 Proof.
   intros b_norm cr ci z Hb_nonzero Hz_sq Henv_eq.
   nra.
