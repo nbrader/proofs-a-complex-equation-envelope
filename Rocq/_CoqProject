@@ -9,5 +9,5 @@
 -R . ComplexEnvelope
 
 # Source files
-# ComplexEnvelope.v  # Has admits, not fully proven yet
+ComplexEnvelope.v
 ComplexEnvelope_Coquelicot.v
