@@ -834,10 +834,16 @@ Proof.
 Qed.
 
 (*
-  To avoid re-deriving the entire geometric construction, we assume a lemma
-  that produces real coordinates satisfying the normalized system whenever
-  a point lies on the envelope and |b'| <> 0.  We then lift those coordinates
-  to complex numbers in construct_E_from_envelope_point.
+  To avoid re-deriving the full analytic construction in this file, we assume
+  the following lemma: whenever (br, bi) <> 0 and (cr, ci) sits on the envelope,
+  there exist real coordinates (er, ei) solving the normalized system.
+
+  In the Coquelicot variant (Rocq/ComplexEnvelope_Coquelicot.v), this lemma is
+  proven using analysis: treat |E| as a real parameter, show that the quadratic
+  obtained from the envelope equation has non-negative discriminant, and then
+  apply the Intermediate Value Theorem to obtain a suitable radius.  This axiom
+  is exactly that result; once we port the Coquelicot proof here, we can replace
+  the axiom with the proven lemma and discharge the assumption.
 *)
 
 Axiom envelope_point_real_solution :
