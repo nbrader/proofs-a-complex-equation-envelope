@@ -757,11 +757,23 @@ Proof.
       unfold on_envelope in Hon.
       simpl in Hon.
       rewrite Cnorm_Czero in Hon.
-      destruct Hon as [Henv _].
-      simpl in Henv.
+      destruct Hon as [Henv Hconstraint].
+      simpl in Henv, Hconstraint.
       replace (0 * 0 * 0 * 0 / 4) with 0 in Henv by field.
       replace (0 * 0) with 0 in Henv by ring.
       replace (0 - 0 * Cre c_prime) with 0 in Henv by ring.
+      replace (0 * 0 / 2) with 0 in Hconstraint by field.
+
+      (* Prove that c_prime is a non-positive real *)
+      assert (Hc_im_zero : Cim c_prime = 0).
+      {
+        apply Rmult_integral in Henv as [H | H]; exact H.
+      }
+      assert (Hc_re_nonpos : Cre c_prime <= 0).
+      {
+        exact Hconstraint.
+      }
+      clear Henv Hconstraint.
       assert (a *c Czero = Czero).
       { unfold Cmul, Czero, Cre, Cim.
         simpl.
@@ -798,15 +810,46 @@ Proof.
       }
       clear H_czero_mul H_czero_right.
 
-      * (* c_prime = Czero case *)
-      (* Now Henv : Cim c_prime * Cim c_prime = 0, which gives Cim c_prime = 0.
-         From the envelope constraint (discarded above), we also have Cre c_prime <= 0.
-         So c_prime lies on the non-positive real axis.
+      (* We have proven:
+         - Hc_im_zero : Cim c_prime = 0
+         - Hc_re_nonpos : Cre c_prime <= 0
+         Therefore c_prime is a non-positive real number.
 
-         This special case requires showing equation a Czero (a *c c_prime) E
-         for some E. This is a degenerate case of the envelope.
-         We admit this for now. *)
-      admit.
+         To prove: exists E, a *c E *c Cconj E +c a *c c_prime = Czero
+         Since E *c Cconj E = (|E|^2, 0), we need |E|^2 = -Cre c_prime. *)
+
+      destruct (Req_dec (Cre c_prime) 0) as [Hc_re_zero | Hc_re_neg].
+      * (* Case: Cre c_prime = 0, so c_prime = Czero *)
+        assert (Hc_prime_zero : c_prime = Czero).
+        {
+          apply Czero_eq.
+          split; [exact Hc_re_zero | exact Hc_im_zero].
+        }
+        subst c_prime.
+        exists Czero.
+        destruct a as [ar ai].
+        unfold Cmul, Cconj, Cadd, Czero, Cre, Cim.
+        simpl.
+        f_equal; ring.
+      * (* Case: Cre c_prime < 0, so -Cre c_prime > 0 *)
+        assert (Hc_re_neg_pos : Cre c_prime < 0) by lra.
+        assert (Hneg_c_re_pos : -Cre c_prime > 0) by lra.
+        set (r := sqrt (-Cre c_prime)).
+        assert (Hr_nonneg : 0 <= r) by (unfold r; apply sqrt_pos).
+        assert (Hr_sq : r * r = -Cre c_prime).
+        {
+          unfold r.
+          rewrite sqrt_sqrt; lra.
+        }
+        exists (r, 0).
+        destruct a as [ar ai].
+        destruct c_prime as [cr ci].
+        unfold Cmul, Cconj, Cadd, Czero, Cre, Cim in *.
+        simpl in *.
+        subst ci.
+        apply Czero_eq.
+        simpl.
+        split; nra.
     + (* b_prime <> Czero case *)
       (* Use the construct_E_from_envelope_point lemma to find E
          such that equation (1,0) b_prime c_prime E holds *)
