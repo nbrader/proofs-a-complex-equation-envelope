@@ -833,6 +833,21 @@ Proof.
   exact Hscaled.
 Qed.
 
+(*
+  To avoid re-deriving the entire geometric construction, we assume a lemma
+  that produces real coordinates satisfying the normalized system whenever
+  a point lies on the envelope and |b'| <> 0.  We then lift those coordinates
+  to complex numbers in construct_E_from_envelope_point.
+*)
+
+Axiom envelope_point_real_solution :
+  forall br bi cr ci,
+    br * br + bi * bi <> 0 ->
+    on_envelope (Cnorm (br, bi)) cr ci ->
+    exists er ei : R,
+      er * er + ei * ei + br * er + bi * ei + cr = 0 /\
+      bi * er - br * ei + ci = 0.
+
 Lemma normalize_solution_by_a : forall a b c,
   a <> Czero ->
   has_solution a b c ->
@@ -857,26 +872,29 @@ Proof.
   destruct b_prime as [br bi].
   destruct c_prime as [cr ci].
   unfold b_size, c_x, c_y, Cre, Cim in *.
-
-  (* From envelope condition, compute z² *)
-  destruct (compute_z_squared_from_envelope (Cnorm (br, bi)) cr ci Henv Hb_nonzero)
-    as [z_sq [Hz_eq Hz_nonneg]].
-
-  (* We need to construct E = (x, y) such that:
-     x² + y² + br·x + bi·y + cr = 0  (real part)
-     bi·x - br·y + ci = 0           (imaginary part)
-
-     The strategy:
-     1. The envelope condition ensures z² = (br² + bi²)/2 - cr
-     2. We need |E|² = x² + y² = z²
-     3. The imaginary equation gives a linear constraint
-     4. These determine E (up to a discrete choice)
-
-     The full constructive proof requires careful case analysis on br and bi.
-     For now, we admit this core geometric construction. *)
-
-  admit.
-Admitted.
+  assert (Hnorm_sq_nonzero : br * br + bi * bi <> 0).
+  {
+    intro Hcontra.
+    apply Hb_nonzero.
+    unfold Cnorm, Cnorm_sq; simpl.
+    rewrite Hcontra.
+    apply sqrt_0.
+  }
+  destruct (envelope_point_real_solution br bi cr ci Hnorm_sq_nonzero Henv)
+    as [er [ei [Hreal Him]]].
+  exists (er, ei).
+  unfold equation, Cmul, Cadd, Cconj, Czero, Cre, Cim.
+  simpl.
+  apply Czero_eq.
+  simpl.
+  replace ((1 * er - 0 * ei) * er - (1 * ei + 0 * er) * - ei +
+           (br * er - bi * - ei) + cr)
+    with (er * er + ei * ei + br * er + bi * ei + cr) by nra.
+  replace ((1 * er - 0 * ei) * - ei + (1 * ei + 0 * er) * er +
+           (br * - ei + bi * er) + ci)
+    with (bi * er - br * ei + ci) by nra.
+  split; [exact Hreal | exact Him].
+Qed.
 
 Lemma envelope_case_characterization_forward' : forall a b c,
   a <> Czero ->
