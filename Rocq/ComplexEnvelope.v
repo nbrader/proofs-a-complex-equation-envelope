@@ -731,6 +731,24 @@ Proof.
 Admitted.
 
 (*
+  For points strictly inside the envelope, a solution exists.
+  This requires constructing E such that the line (parameterized by angle)
+  intersects a circle of appropriate radius.
+*)
+
+Lemma construct_E_from_inside_envelope : forall a b_prime c_prime,
+  a <> Czero ->
+  inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) ->
+  has_solution a (a *c b_prime) (a *c c_prime).
+Proof.
+  (* For points strictly inside the envelope, multiple solutions exist.
+     The construction is similar to the "on envelope" case but requires
+     showing that two distinct circles intersect the line.
+     We admit this for now. *)
+  admit.
+Admitted.
+
+(*
   Here is the corrected version of the backward direction that is provable:
 *)
 
@@ -742,11 +760,7 @@ Lemma envelope_case_characterization_backward_corrected : forall a b_prime c_pri
 Proof.
   intros a b_prime c_prime Ha_nonzero [Hin | Hon].
   - (* Inside the envelope case *)
-    (* For points strictly inside the envelope, multiple solutions exist.
-       The construction is similar to the "on envelope" case but requires
-       showing that two distinct circles intersect the line.
-       We admit this for now. *)
-    admit.
+    apply construct_E_from_inside_envelope; assumption.
   - (* On the envelope case *)
     unfold has_solution.
 
@@ -880,7 +894,7 @@ Proof.
       exists E.
       apply scale_solution_by_a.
       exact HE_normalized.
-Admitted.
+Qed.
 
 (*
   ==============================================================================
