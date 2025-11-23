@@ -1129,32 +1129,6 @@ Qed.
     has_solution a (a *c b_prime) (a *c c_prime).
 *)
 
-Lemma envelope_case_characterization_backward : forall a b c,
-  a <> Czero ->
-  (exists b_prime c_prime,
-      inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) \/
-      on_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime)) ->
-  has_solution a b c.
-Proof.
-  intros a b c Ha_nonzero Henv.
-  destruct Henv as [b_prime [c_prime [Hin | Hon]]].
-  - (* Inside the envelope case *)
-    (* Without division to relate b,c to b_prime,c_prime, we need to
-       assume b = a *c b_prime and c = a *c c_prime.
-       For now, we admit this case as the formalization is incomplete. *)
-    admit.
-  - (* On the envelope case *)
-    (* Similarly, this case requires b = a *c b_prime and c = a *c c_prime.
-       The mathematical content would be:
-       1. Use construct_E_from_envelope_point to find E with
-          E·Ē + b_prime·Ē + c_prime = 0
-       2. Show that this E also satisfies a·E·Ē + b·Ē + c = 0
-          when b = a *c b_prime and c = a *c c_prime
-
-       We admit this for now due to the formalization gap. *)
-    admit.
-Admitted.
-
 (*
   For points strictly inside the envelope, a solution exists.
   This requires constructing E such that the line (parameterized by angle)
@@ -1173,11 +1147,7 @@ Proof.
   admit.
 Admitted.
 
-(*
-  Here is the corrected version of the backward direction that is provable:
-*)
-
-Lemma envelope_case_characterization_backward_corrected : forall a b_prime c_prime,
+Lemma envelope_case_characterization_backward : forall a b_prime c_prime,
   a <> Czero ->
   (inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) \/
    on_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime)) ->
@@ -1359,7 +1329,7 @@ Proof.
       * contradiction.
       * destruct Henv as [b_prime [c_prime [Hb_scaled [Hc_scaled Henv_cases]]]].
         rewrite Hb_scaled, Hc_scaled.
-        eapply envelope_case_characterization_backward_corrected; eauto.
+        eapply envelope_case_characterization_backward; eauto.
 Qed.
 Print Assumptions envelope_characterizes_solutions.
 
