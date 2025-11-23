@@ -762,8 +762,48 @@ Proof.
       replace (0 * 0 * 0 * 0 / 4) with 0 in Henv by field.
       replace (0 * 0) with 0 in Henv by ring.
       replace (0 - 0 * Cre c_prime) with 0 in Henv by ring.
-      (* Now Henv : Cim c_prime * Cim c_prime = 0, so Cim c_prime = 0 *)
-      (* This special case requires showing equation a Czero (a *c c_prime) E
+      assert (a *c Czero = Czero).
+      { unfold Cmul, Czero, Cre, Cim.
+        simpl.
+        f_equal; ring. }
+      rewrite H. clear H.
+      unfold equation.
+      assert (H_czero_mul : forall x, Czero *c Cconj x = Czero).
+      {
+        intros [xr xi].
+        unfold Cmul, Cconj, Czero, Cre, Cim.
+        simpl.
+        f_equal; ring.
+      }
+      (* Simplify using H_czero_mul: Czero *c Cconj E = Czero *)
+      assert (H_czero_right : forall z, z +c Czero = z).
+      {
+        intros [zr zi].
+        unfold Cadd, Czero, Cre, Cim.
+        simpl.
+        f_equal; ring.
+      }
+      (* Goal is now: exists E, a *c E *c Cconj E +c Czero *c Cconj E +c a *c c_prime = Czero
+         Simplifies to: exists E, a *c E *c Cconj E +c Czero +c a *c c_prime = Czero
+         Simplifies to: exists E, a *c E *c Cconj E +c a *c c_prime = Czero *)
+      
+      (* Rewrite to simplify *)
+      enough (exists E : C, a *c E *c Cconj E +c a *c c_prime = Czero) as Hgoal.
+      {
+        destruct Hgoal as [E HE].
+        exists E.
+        rewrite H_czero_mul.
+        rewrite H_czero_right.
+        exact HE.
+      }
+      clear H_czero_mul H_czero_right.
+
+      * (* c_prime = Czero case *)
+      (* Now Henv : Cim c_prime * Cim c_prime = 0, which gives Cim c_prime = 0.
+         From the envelope constraint (discarded above), we also have Cre c_prime <= 0.
+         So c_prime lies on the non-positive real axis.
+
+         This special case requires showing equation a Czero (a *c c_prime) E
          for some E. This is a degenerate case of the envelope.
          We admit this for now. *)
       admit.
