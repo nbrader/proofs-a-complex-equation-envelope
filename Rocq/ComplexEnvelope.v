@@ -115,6 +115,56 @@ Proof.
   { apply Rmult_integral in Hy_sq as [Hy_zero | Hy_zero]; assumption. }
   subst. split; reflexivity.
 Qed.
+
+Lemma sum_squares_eq_zero : forall x y : R,
+  x * x + y * y = 0 ->
+  x = 0 /\ y = 0.
+Proof.
+  intros x y Hsum.
+  assert (Hx_nonneg : 0 <= x * x) by apply Rle_0_sqr.
+  assert (Hy_nonneg : 0 <= y * y) by apply Rle_0_sqr.
+  assert (Hx_eq : x * x = 0).
+  { apply Rle_antisym; [lra | exact Hx_nonneg]. }
+  assert (Hy_eq : y * y = 0).
+  { apply Rle_antisym; [lra | exact Hy_nonneg]. }
+  apply Rmult_integral in Hx_eq as [Hx | Hx];
+  apply Rmult_integral in Hy_eq as [Hy | Hy]; subst; split; reflexivity.
+Qed.
+
+Lemma dot_cross_identity : forall br bi er ei : R,
+  (br * br + bi * bi) * (er * er + ei * ei) =
+  (br * er + bi * ei) * (br * er + bi * ei) +
+  (bi * er - br * ei) * (bi * er - br * ei).
+Proof.
+  intros br bi er ei.
+  ring.
+Qed.
+
+Lemma square_completion : forall x y : R,
+  x * x / 4 + y * y + x * y = (y + x / 2) * (y + x / 2).
+Proof.
+  intros x y.
+  unfold Rdiv.
+  nra.
+Qed.
+
+Lemma shifted_square_sum : forall x u y v : R,
+  (x + u / 2) * (x + u / 2) + (y + v / 2) * (y + v / 2) =
+  x * x + y * y + u * x + v * y + (u * u + v * v) / 4.
+Proof.
+  intros x u y v.
+  unfold Rdiv.
+  nra.
+Qed.
+
+Lemma add_eq_zero_implies_neg : forall a b : R,
+  a + b = 0 ->
+  b = - a.
+Proof.
+  intros a b Hsum.
+  lra.
+Qed.
+
 Definition Cscale (r : R) (z : C) : C :=
   (r * Cre z, r * Cim z).
 
@@ -893,9 +943,151 @@ Lemma envelope_case_characterization_forward_normalized :
     inside_envelope (Cnorm b) (Cre c) (Cim c) \/
     on_envelope (Cnorm b) (Cre c) (Cim c).
 Proof.
-  (* Proving this lemma requires the full geometric construction
-     that demonstrates how normalized solutions lie on the envelope. *)
-Admitted.
+  intros [br bi] [cr ci] Hsol.
+  destruct Hsol as [[er ei] Heq].
+  unfold equation, Cone, Cmul, Cadd, Cconj, Czero in Heq; simpl in Heq.
+  apply Czero_eq in Heq as [Hre Him].
+  simpl in Hre, Him.
+  set (bn2 := br * br + bi * bi).
+  set (b_norm := Cnorm (br, bi)).
+  assert (Hbn2_nonneg : 0 <= bn2).
+  { unfold bn2; apply Rplus_le_le_0_compat; apply Rle_0_sqr. }
+  destruct (Req_dec bn2 0) as [Hbn2_zero | Hbn2_nonzero].
+  - apply sum_squares_eq_zero in Hbn2_zero as [Hbr_zero Hbi_zero].
+    subst br bi.
+    simpl in Him.
+    assert (Hci_zero : ci = 0) by lra.
+    simpl in Hre.
+    assert (Hcr_nonpos : cr <= 0).
+    { replace cr with (- (er * er + ei * ei)) by lra.
+      assert (Hsq_nonneg : 0 <= er * er + ei * ei).
+      { apply Rplus_le_le_0_compat; apply Rle_0_sqr. }
+      lra. }
+    assert (Hb_norm_zero : b_norm = 0).
+    {
+      unfold b_norm.
+      change (Cnorm (0, 0)) with (Cnorm Czero).
+      apply Cnorm_Czero.
+    }
+    right.
+    rewrite Hb_norm_zero.
+    unfold on_envelope; simpl.
+    split.
+    + rewrite Hci_zero. lra.
+    + replace ((0 * 0) / 2) with 0 by field.
+      exact Hcr_nonpos.
+  - assert (Hbn2_pos : 0 < bn2) by lra.
+    set (s := br * er + bi * ei).
+    set (t := bi * er - br * ei).
+    assert (Hre_simplified : er * er + ei * ei + br * er + bi * ei + cr = 0).
+    {
+      replace (er * er + ei * ei + br * er + bi * ei + cr)
+        with ((1 * er - 0 * ei) * er - (1 * ei + 0 * er) * - ei +
+              (br * er - bi * - ei) + cr) by ring.
+      exact Hre.
+    }
+    assert (Him_simplified : bi * er - br * ei + ci = 0).
+    {
+      replace (bi * er - br * ei + ci)
+        with ((1 * er - 0 * ei) * - ei + (1 * ei + 0 * er) * er +
+              (br * - ei + bi * er) + ci) by ring.
+      exact Him.
+    }
+    assert (Hre_sum : er * er + ei * ei + s + cr = 0).
+    {
+      unfold s.
+      replace (er * er + ei * ei + (br * er + bi * ei) + cr)
+        with (er * er + ei * ei + br * er + bi * ei + cr) by ring.
+      exact Hre_simplified.
+    }
+    assert (Hcr_expr : cr = - (er * er + ei * ei + s)).
+    {
+      apply add_eq_zero_implies_neg.
+      exact Hre_sum.
+    }
+    assert (Hci_expr : ci = - t).
+    {
+      apply add_eq_zero_implies_neg.
+      unfold t.
+      exact Him_simplified.
+    }
+    set (rhs := (bn2 * bn2) / 4 - bn2 * cr).
+    assert (Hci_sq_le : ci * ci <= rhs).
+    {
+      assert (Hdot :
+        bn2 * (er * er + ei * ei) = s * s + t * t).
+      {
+        unfold bn2, s, t.
+        apply dot_cross_identity.
+      }
+      assert (Hdiff :
+        rhs - ci * ci = (s + bn2 / 2) * (s + bn2 / 2)).
+      {
+        rewrite Hci_expr.
+        unfold rhs.
+        rewrite Hcr_expr.
+        replace (bn2 * bn2 / 4 - bn2 * - (er * er + ei * ei + s) - - t * - t)
+          with (bn2 * bn2 / 4 + bn2 * (er * er + ei * ei) + bn2 * s - t * t) by ring.
+        rewrite Hdot.
+        replace (bn2 * bn2 / 4 + (s * s + t * t) + bn2 * s - t * t) with (bn2 * bn2 / 4 + (s * s + t * t + bn2 * s - t * t)) by ring.
+        replace (s * s + t * t + bn2 * s - t * t) with (s * s + bn2 * s) by ring.
+        replace (bn2 * bn2 / 4 + (s * s + bn2 * s)) with (bn2 * bn2 / 4 + s * s + bn2 * s) by ring.
+        apply square_completion with (x := bn2) (y := s).
+      }
+      assert (Hsq_nonneg : 0 <= (s + bn2 / 2) * (s + bn2 / 2)) by apply Rle_0_sqr.
+      lra.
+    }
+    set (expr := (er + br / 2) * (er + br / 2) + (ei + bi / 2) * (ei + bi / 2)).
+    assert (Hexpr_nonneg : 0 <= expr).
+    {
+      unfold expr.
+      apply Rplus_le_le_0_compat; apply Rle_0_sqr.
+    }
+    assert (Hcr_le_quarter : cr <= bn2 / 4).
+    {
+      unfold expr in Hexpr_nonneg.
+      rewrite (shifted_square_sum er br ei bi) in Hexpr_nonneg.
+      change (br * er + bi * ei) with s in Hexpr_nonneg.
+      change ((br * br + bi * bi) / 4) with (bn2 / 4) in Hexpr_nonneg.
+      replace (er * er + ei * ei + s) with (- cr) in Hexpr_nonneg by lra.
+      lra.
+    }
+    assert (Hcr_le_half : cr <= bn2 / 2) by lra.
+    assert (Hb_norm_sq : b_norm * b_norm = bn2).
+    {
+      unfold b_norm, Cnorm, Cnorm_sq; simpl.
+      rewrite sqrt_sqrt; [reflexivity | exact Hbn2_nonneg].
+    }
+    set (env_rhs :=
+      (b_norm * b_norm * b_norm * b_norm) / 4 -
+      (b_norm * b_norm) * cr).
+    assert (Henv_rhs_eq : env_rhs = rhs).
+    {
+      unfold env_rhs, rhs.
+      set (q := b_norm * b_norm).
+      assert (Hq : q = bn2) by (subst q; exact Hb_norm_sq).
+      rewrite Hq.
+      replace (bn2 * b_norm * b_norm) with (bn2 * (b_norm * b_norm)) by lra.
+      rewrite Hb_norm_sq.
+      reflexivity.
+    }
+    destruct (Rlt_dec (ci * ci) rhs) as [Hstrict | Hnlt].
+    + left.
+      split.
+      * rewrite <- Henv_rhs_eq in Hstrict.
+        exact Hstrict.
+      * rewrite Hb_norm_sq.
+        exact Hcr_le_half.
+    + right.
+      split.
+      * apply Rle_antisym.
+        -- rewrite <- Henv_rhs_eq in Hci_sq_le.
+           exact Hci_sq_le.
+        -- rewrite <- Henv_rhs_eq in Hnlt.
+           apply Rnot_lt_le; exact Hnlt.
+      * rewrite Hb_norm_sq.
+        exact Hcr_le_half.
+Qed.
 
 Lemma envelope_case_characterization_forward : forall a b c,
   a <> Czero ->
