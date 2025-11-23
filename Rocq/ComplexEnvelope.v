@@ -635,60 +635,14 @@ Lemma envelope_case_characterization_forward : forall a b c,
   a <> Czero ->
   has_solution a b c ->
   exists b_prime c_prime,
-    inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) \/
-    on_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime).
+    b = a *c b_prime /\
+    c = a *c c_prime /\
+    (inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) \/
+     on_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime)).
 Proof.
-  intros a b c Ha_nonzero _.
-  set (b_size := Cnorm b).
-  assert (Hb_nonneg : 0 <= b_size) by apply sqrt_pos.
-  destruct (Req_dec b_size 0) as [Hb_zero | Hb_nonzero].
-  - subst b_size.
-    exists Czero, Czero.
-    right.
-    simpl.
-    rewrite Cnorm_Czero.
-    exact envelope_at_origin.
-  - assert (Hb_pos : b_size > 0) by lra.
-    assert (Hb_nonneg_ge : b_size >= 0).
-    { unfold Rge. left. exact Hb_pos. }
-    pose proof (envelope_parabola_cy_zero b_size Hb_pos) as Hvertex.
-    pose proof (envelope_symmetric b_size ((b_size * b_size) / 4) 0 Hvertex)
-      as Hvertex_sym.
-    set (cy_peak := (b_size * b_size) / 2).
-    assert (Hy_bound_peak :
-      cy_peak * cy_peak <= (b_size * b_size * b_size * b_size) / 4).
-    { unfold cy_peak.
-      apply Req_le.
-      field. }
-    destruct (envelope_symmetric_in_cx b_size cy_peak Hb_nonneg_ge Hy_bound_peak)
-      as [cx_peak Hcx_choice].
-    destruct Hcx_choice as [Hcx_on | Hcx_on].
-    + set (b_prime := (b_size, 0)).
-      set (c_prime := (cx_peak, cy_peak)).
-      assert (Hb_norm : Cnorm b_prime = b_size).
-      { unfold b_prime, Cnorm, Cnorm_sq, Cre, Cim; simpl.
-        replace (b_size * b_size + 0 * 0) with (b_size * b_size) by ring.
-        rewrite sqrt_square; lra. }
-      exists b_prime, c_prime.
-      right.
-      unfold b_prime, c_prime in *; simpl in *.
-      rewrite Hb_norm.
-      exact Hcx_on.
-    + pose proof (envelope_symmetric b_size cx_peak (-cy_peak) Hcx_on)
-        as Hcx_pos.
-      set (b_prime := (b_size, 0)).
-      set (c_prime := (cx_peak, cy_peak)).
-      assert (Hb_norm : Cnorm b_prime = b_size).
-      { unfold b_prime, Cnorm, Cnorm_sq, Cre, Cim; simpl.
-        replace (b_size * b_size + 0 * 0) with (b_size * b_size) by ring.
-        rewrite sqrt_square; lra. }
-      exists b_prime, c_prime.
-      right.
-      unfold b_prime, c_prime in *; simpl in *.
-      rewrite Hb_norm.
-      replace (- - cy_peak) with cy_peak in Hcx_pos by ring.
-      exact Hcx_pos.
-Qed.
+  (* Proving the forward direction with explicit normalized parameters requires
+     a full development of complex division. This is left as future work. *)
+Admitted.
 
 (*
   NOTE: This lemma has a formalization gap. In a complete formalization,
@@ -913,8 +867,10 @@ Theorem envelope_characterizes_solutions : forall a b c,
   (a = Czero /\ (b <> Czero \/ (b = Czero /\ c = Czero))) \/
   (a <> Czero /\
     exists b_prime c_prime,
-      inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) \/
-      on_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime)).
+      b = a *c b_prime /\
+      c = a *c c_prime /\
+      (inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) \/
+       on_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime))).
 Proof.
   intros a b c.
   destruct (classic (a = Czero)) as [Ha_zero | Ha_nonzero].
@@ -930,7 +886,9 @@ Proof.
       split; [exact Ha_nonzero | eapply envelope_case_characterization_forward; eauto].
     + destruct H as [[Ha_contra _] | [Ha_nonzero' Henv]].
       * contradiction.
-      * eapply envelope_case_characterization_backward; eauto.
+      * destruct Henv as [b_prime [c_prime [Hb_scaled [Hc_scaled Henv_cases]]]].
+        rewrite Hb_scaled, Hc_scaled.
+        eapply envelope_case_characterization_backward_corrected; eauto.
 Qed.
 
 (*
@@ -974,8 +932,11 @@ Qed.
       bi·x - br·y + ci = 0
     with careful case analysis on br and bi.
 
-  - envelope_case_characterization_backward (original): Has formalization gap due to
-    lack of complex division. Would need to define b' = b/a and c' = c/a properly.
+  - construct_E_from_inside_envelope: Admitted until the geometric construction for
+    the interior case is carried out.
+
+  - envelope_case_characterization_forward: Strengthened statement now requires
+    explicit normalization (b = a *c b', c = a *c c'), which needs complex division.
 
   Note: The mathematical content is sound and the proof structure is complete.
   The remaining work is primarily the technical geometric construction and
