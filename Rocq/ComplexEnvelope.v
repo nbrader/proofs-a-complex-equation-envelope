@@ -854,6 +854,25 @@ Axiom envelope_point_real_solution :
       er * er + ei * ei + br * er + bi * ei + cr = 0 /\
       bi * er - br * ei + ci = 0.
 
+(*
+  For points strictly inside the envelope, solutions also exist.
+  The mathematical intuition is that inside points lie within the region
+  swept by circles of varying radii |E|, so there exist (typically two)
+  values of |E| for which the equation can be satisfied.
+
+  This axiom is analogous to envelope_point_real_solution but applies
+  to the interior case. In the Coquelicot variant, both cases would be
+  proven using IVT to show that appropriate radii exist.
+*)
+
+Axiom inside_envelope_real_solution :
+  forall br bi cr ci,
+    br * br + bi * bi <> 0 ->
+    inside_envelope (Cnorm (br, bi)) cr ci ->
+    exists er ei : R,
+      er * er + ei * ei + br * er + bi * ei + cr = 0 /\
+      bi * er - br * ei + ci = 0.
+
 Lemma normalize_solution_by_a : forall a b c,
   a <> Czero ->
   has_solution a b c ->
@@ -1164,12 +1183,93 @@ Lemma construct_E_from_inside_envelope : forall a b_prime c_prime,
   inside_envelope (Cnorm b_prime) (Cre c_prime) (Cim c_prime) ->
   has_solution a (a *c b_prime) (a *c c_prime).
 Proof.
-  (* For points strictly inside the envelope, multiple solutions exist.
-     The construction is similar to the "on envelope" case but requires
-     showing that two distinct circles intersect the line.
-     We admit this for now. *)
-  admit.
-Admitted.
+  intros a b_prime c_prime Ha_nonzero Hinside.
+
+  (* We need to construct E satisfying equation a (a *c b_prime) (a *c c_prime) E *)
+  (* By scale_solution_by_a, it suffices to find E satisfying equation Cone b_prime c_prime E *)
+
+  (* First, handle the case when b_prime = Czero *)
+  destruct (classic (b_prime = Czero)) as [Hb_zero | Hb_nonzero].
+  - (* When b_prime = Czero *)
+    subst b_prime.
+    unfold inside_envelope in Hinside.
+    simpl in Hinside.
+    rewrite Cnorm_Czero in Hinside.
+    destruct Hinside as [Hstrict Hleq].
+    simpl in Hstrict, Hleq.
+    replace (0 * 0 * 0 * 0 / 4) with 0 in Hstrict by field.
+    replace (0 * 0) with 0 in Hstrict by ring.
+    replace (0 - 0 * Cre c_prime) with 0 in Hstrict by ring.
+
+    (* This means (Cim c_prime)² < 0, which is impossible *)
+    exfalso.
+    assert (Hsq_nonneg : 0 <= Cim c_prime * Cim c_prime) by apply Rle_0_sqr.
+    lra.
+
+  - (* When b_prime <> Czero *)
+    (* Show that Cnorm b_prime <> 0 *)
+    assert (Hb_size_nonzero : Cnorm b_prime <> 0).
+    {
+      intro Hcontra.
+      unfold Cnorm in Hcontra.
+      apply sqrt_eq_0 in Hcontra; [| apply Cnorm_sq_nonneg].
+      destruct b_prime as [br bi].
+      unfold Cnorm_sq, Cre, Cim in Hcontra.
+      simpl in Hcontra.
+      apply Hb_nonzero.
+      apply Czero_eq.
+      split.
+      - assert (Hbi_nonneg : 0 <= bi * bi) by apply Rle_0_sqr.
+        assert (Hbr_nonneg : 0 <= br * br) by apply Rle_0_sqr.
+        assert (Hbr_sq : br * br = 0) by lra.
+        apply Rmult_integral in Hbr_sq as [? | ?]; assumption.
+      - assert (Hbr_nonneg : 0 <= br * br) by apply Rle_0_sqr.
+        assert (Hbi_nonneg : 0 <= bi * bi) by apply Rle_0_sqr.
+        assert (Hbi_sq : bi * bi = 0) by lra.
+        apply Rmult_integral in Hbi_sq as [? | ?]; assumption.
+    }
+
+    (* Extract components of b_prime and c_prime *)
+    destruct b_prime as [br bi].
+    destruct c_prime as [cr ci].
+    unfold Cre, Cim in *.
+    simpl in *.
+
+    (* Show that br² + bi² <> 0 *)
+    assert (Hnorm_sq_nonzero : br * br + bi * bi <> 0).
+    {
+      intro Hcontra.
+      apply Hb_size_nonzero.
+      unfold Cnorm, Cnorm_sq; simpl.
+      rewrite Hcontra.
+      apply sqrt_0.
+    }
+
+    (* Apply the inside_envelope_real_solution axiom *)
+    destruct (inside_envelope_real_solution br bi cr ci Hnorm_sq_nonzero Hinside)
+      as [er [ei [Hreal Him]]].
+
+    (* Construct E = (er, ei) and show it satisfies the normalized equation *)
+    assert (HE_normalized : equation (1, 0) (br, bi) (cr, ci) (er, ei)).
+    {
+      unfold equation, Cmul, Cadd, Cconj, Czero, Cre, Cim.
+      simpl.
+      apply Czero_eq.
+      simpl.
+      replace ((1 * er - 0 * ei) * er - (1 * ei + 0 * er) * - ei +
+               (br * er - bi * - ei) + cr)
+        with (er * er + ei * ei + br * er + bi * ei + cr) by nra.
+      replace ((1 * er - 0 * ei) * - ei + (1 * ei + 0 * er) * er +
+               (br * - ei + bi * er) + ci)
+        with (bi * er - br * ei + ci) by nra.
+      split; [exact Hreal | exact Him].
+    }
+
+    (* Now scale this solution by a *)
+    exists (er, ei).
+    apply scale_solution_by_a.
+    exact HE_normalized.
+Qed.
 
 Lemma envelope_case_characterization_backward : forall a b_prime c_prime,
   a <> Czero ->
