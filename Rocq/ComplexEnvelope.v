@@ -16,9 +16,9 @@
   ==============================================================================
 *)
 
-From Stdlib Require Import Reals.
-From Stdlib Require Import Classical.
-From Stdlib Require Import Lra.
+Require Import Reals.
+Require Import Classical.
+Require Import Lra.
 From Coq Require Import setoid_ring.Field.
 Open Scope R_scope.
 
@@ -954,7 +954,14 @@ Proof.
     (* So: Δ = 4br²·(br² + bi²)·A² for some A ≥ 0 *)
 
     set (A := br * br + bi * bi).
-    assert (HA_pos : A > 0) by (unfold A; lra).
+    assert (HA_pos : A > 0).
+    {
+      unfold A.
+      assert (Hbr_sq_pos : 0 < br * br).
+      { apply Rsqr_pos_lt. exact Hbr_nonzero. }
+      assert (Hbi_sq_nonneg : 0 <= bi * bi) by apply Rle_0_sqr.
+      lra.
+    }
 
     (* Discriminant formula (on envelope, Δ = 0 for tangent circle) *)
     (* For simplicity, we admit the quadratic solution and verification *)
@@ -1034,7 +1041,14 @@ Proof.
     (* The quadratic has two real roots in this case *)
 
     set (A := br * br + bi * bi).
-    assert (HA_pos : A > 0) by (unfold A; lra).
+    assert (HA_pos : A > 0).
+    {
+      unfold A.
+      assert (Hbr_sq_pos : 0 < br * br).
+      { apply Rsqr_pos_lt. exact Hbr_nonzero. }
+      assert (Hbi_sq_nonneg : 0 <= bi * bi) by apply Rle_0_sqr.
+      lra.
+    }
 
     (* For inside envelope: Δ > 0, giving two solutions *)
     (* We can choose either root; both satisfy the equations *)
