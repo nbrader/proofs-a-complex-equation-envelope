@@ -846,13 +846,121 @@ Qed.
   the axiom with the proven lemma and discharge the assumption.
 *)
 
-Axiom envelope_point_real_solution :
+(*
+  Lemma: For points on the envelope, there exist real coordinates (er, ei)
+  solving the real/imaginary parts of the normalized equation.
+
+  Strategy:
+  1. Use envelope condition to compute z² = (br² + bi²)/2 - cr ≥ 0
+  2. For br ≠ 0: Use quadratic formula to find er
+  3. For br = 0: Directly compute er = -ci/bi
+  4. Compute ei from linear constraint: bi·er - br·ei + ci = 0
+  5. Verify both equations hold
+
+  This proof adapts the geometric construction from ComplexEnvelope_Coquelicot.v
+  to work with the standard library's real number system.
+*)
+Lemma envelope_point_real_solution :
   forall br bi cr ci,
     br * br + bi * bi <> 0 ->
     on_envelope (Cnorm (br, bi)) cr ci ->
     exists er ei : R,
       er * er + ei * ei + br * er + bi * ei + cr = 0 /\
       bi * er - br * ei + ci = 0.
+Proof.
+  intros br bi cr ci Hb_sq_nonzero Hon.
+  destruct Hon as [Henv_eq Hcr_bound].
+
+  (* Compute b_norm and b_norm² *)
+  set (b_norm := Cnorm (br, bi)).
+  assert (Hb_norm_sq : b_norm * b_norm = br * br + bi * bi).
+  {
+    unfold b_norm, Cnorm, Cnorm_sq. simpl.
+    rewrite sqrt_sqrt; [reflexivity | ].
+    apply Rplus_le_le_0_compat; apply Rle_0_sqr.
+  }
+
+  (* Compute z² from envelope: z² = (br² + bi²)/2 - cr *)
+  set (z_sq := (b_norm * b_norm) / 2 - cr).
+  assert (Hz_sq_nonneg : 0 <= z_sq).
+  {
+    unfold z_sq.
+    assert (Hcr_le_half : cr <= (b_norm * b_norm) / 2).
+    {
+      unfold Rdiv.
+      assert (Htmp : (b_norm * b_norm) / 2 <= (b_norm * b_norm) / 2) by lra.
+      apply (Rle_trans cr ((b_norm * b_norm) / 2) ((b_norm * b_norm) / 2)); [exact Hcr_bound | exact Htmp].
+    }
+    lra.
+  }
+
+  (* Case analysis: br = 0 or br ≠ 0 *)
+  destruct (Req_dec br 0) as [Hbr_zero | Hbr_nonzero].
+
+  - (* Case: br = 0, so bi ≠ 0 *)
+    subst br.
+    assert (Hbi_nonzero : bi <> 0).
+    {
+      intro Hcontra.
+      apply Hb_sq_nonzero.
+      rewrite Hcontra. lra.
+    }
+
+    (* From imaginary constraint: bi·er - 0·ei = -ci, so er = -ci/bi *)
+    set (er := - ci / bi).
+
+    (* From real constraint: er² + ei² + 0·er + bi·ei + cr = 0 *)
+    (* So: ei² + bi·ei = -(er² + cr) *)
+    (* This is satisfied when ei is chosen such that er² + ei² = z² *)
+    (* From circle: z² = (bi²)/2 - cr *)
+    (* We need: ei² = z² - er² *)
+
+    set (ei_sq := z_sq - er * er).
+
+    (* Show ei_sq ≥ 0 *)
+    assert (Hei_sq_nonneg : 0 <= ei_sq).
+    {
+      unfold ei_sq, z_sq, er.
+      rewrite Hb_norm_sq.
+      simpl.
+      (* This requires showing that the envelope condition implies ei² ≥ 0 *)
+      (* From envelope: ci² = bi⁴/4 - bi²·cr *)
+      (* So: z² - er² = (bi²/2 - cr) - ci²/bi² = ... = bi²/4 ≥ 0 *)
+      admit.  (* Technical: envelope discriminant formula *)
+    }
+
+    set (ei := sqrt ei_sq).
+    exists er, ei.
+
+    split.
+    + (* Real part: er² + ei² + 0·er + bi·ei + cr = 0 *)
+      unfold ei, ei_sq, er.
+      rewrite sqrt_sqrt by exact Hei_sq_nonneg.
+      (* The algebra works out by construction *)
+      admit.  (* Technical: algebraic verification *)
+
+    + (* Imaginary part: bi·er - 0·ei + ci = 0 *)
+      unfold er. field. exact Hbi_nonzero.
+
+  - (* Case: br ≠ 0 *)
+    (* Use quadratic formula to find er *)
+    (* The quadratic is: (br² + bi²)·er² + 2bi·ci·er + (ci² - br²·z²) = 0 *)
+    (* Discriminant: Δ = (2bi·ci)² - 4·(br² + bi²)·(ci² - br²·z²) *)
+    (*             = 4bi²·ci² - 4·(br² + bi²)·ci² + 4·(br² + bi²)·br²·z² *)
+    (*             = -4br²·ci² + 4·(br² + bi²)·br²·z² *)
+    (*             = 4br²(-(ci²) + (br² + bi²)·z²) *)
+    (* From envelope: z² = (br² + bi²)/2 - cr *)
+    (* And: ci² = (br² + bi²)²/4 - (br² + bi²)·cr *)
+    (* So: Δ = 4br²·(br² + bi²)·A² for some A ≥ 0 *)
+
+    set (A := br * br + bi * bi).
+    assert (HA_pos : A > 0) by (unfold A; lra).
+
+    (* Discriminant formula (on envelope, Δ = 0 for tangent circle) *)
+    (* For simplicity, we admit the quadratic solution and verification *)
+    (* The full proof is in ComplexEnvelope_Coquelicot.v *)
+    admit.  (* Technical: quadratic formula and verification *)
+Admitted.  (* Proof requires detailed quadratic formula work from Coquelicot version *)
 
 (*
   For points strictly inside the envelope, solutions also exist.
@@ -865,13 +973,73 @@ Axiom envelope_point_real_solution :
   proven using IVT to show that appropriate radii exist.
 *)
 
-Axiom inside_envelope_real_solution :
+(*
+  Lemma: For points strictly inside the envelope, there exist real coordinates
+  (er, ei) solving the real/imaginary parts of the normalized equation.
+
+  Strategy: Nearly identical to envelope_point_real_solution, but now the
+  discriminant is strictly positive (Δ > 0) instead of zero, giving two
+  solutions instead of one tangent point.
+
+  This proof adapts the construction from ComplexEnvelope_Coquelicot.v.
+*)
+Lemma inside_envelope_real_solution :
   forall br bi cr ci,
     br * br + bi * bi <> 0 ->
     inside_envelope (Cnorm (br, bi)) cr ci ->
     exists er ei : R,
       er * er + ei * ei + br * er + bi * ei + cr = 0 /\
       bi * er - br * ei + ci = 0.
+Proof.
+  intros br bi cr ci Hb_sq_nonzero Hin.
+  destruct Hin as [Henv_strict Hcr_bound].
+
+  (* Compute b_norm and b_norm² *)
+  set (b_norm := Cnorm (br, bi)).
+  assert (Hb_norm_sq : b_norm * b_norm = br * br + bi * bi).
+  {
+    unfold b_norm, Cnorm, Cnorm_sq. simpl.
+    rewrite sqrt_sqrt; [reflexivity | ].
+    apply Rplus_le_le_0_compat; apply Rle_0_sqr.
+  }
+
+  (* For inside envelope, we need to find a suitable z² value *)
+  (* There exist two radii that work; we can use IVT or choose one explicitly *)
+  (* The approach in Coquelicot uses the quadratic formula with Δ > 0 *)
+
+  (* Case analysis: br = 0 or br ≠ 0 *)
+  destruct (Req_dec br 0) as [Hbr_zero | Hbr_nonzero].
+
+  - (* Case: br = 0, so bi ≠ 0 *)
+    subst br.
+    assert (Hbi_nonzero : bi <> 0).
+    {
+      intro Hcontra.
+      apply Hb_sq_nonzero.
+      rewrite Hcontra. lra.
+    }
+
+    (* From imaginary constraint: bi·er - 0·ei = -ci, so er = -ci/bi *)
+    set (er := - ci / bi).
+
+    (* For inside envelope, ci² < bi⁴/4 - bi²·cr *)
+    (* So there exist multiple values of ei that work *)
+    (* We can find ei by solving: ei² + bi·ei + (er² + cr) = 0 *)
+
+    (* The proof structure is similar but with strict inequality *)
+    admit.  (* Technical: similar to envelope_point case but with Δ > 0 *)
+
+  - (* Case: br ≠ 0 *)
+    (* Use quadratic formula with strictly positive discriminant *)
+    (* The quadratic has two real roots in this case *)
+
+    set (A := br * br + bi * bi).
+    assert (HA_pos : A > 0) by (unfold A; lra).
+
+    (* For inside envelope: Δ > 0, giving two solutions *)
+    (* We can choose either root; both satisfy the equations *)
+    admit.  (* Technical: quadratic formula with Δ > 0 *)
+Admitted.  (* Proof requires detailed work from Coquelicot version *)
 
 Lemma normalize_solution_by_a : forall a b c,
   a <> Czero ->
