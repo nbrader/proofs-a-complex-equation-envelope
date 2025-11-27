@@ -979,8 +979,9 @@ Proof.
         { assert (Hsqrt_simp : sqrt (bi * bi) * sqrt (bi * bi) = bi * bi).
           { apply Hsqrt_prop. exact Hbi_bi_nonneg. }
           assert (Hprod_eq : bi * bi * sqrt (bi * bi) * sqrt (bi * bi) = bi * bi * bi * bi).
-          { (* This should follow from Hsqrt_simp and ring, but the rewrite pattern matching is failing *)
-            admit. }
+          { transitivity (bi * bi * (sqrt (bi * bi) * sqrt (bi * bi))).
+            - rewrite Rmult_assoc. rewrite Rmult_assoc. reflexivity.
+            - rewrite Hsqrt_simp. rewrite <- Rmult_assoc. reflexivity. }
           rewrite Hprod_eq. reflexivity. }
       }
 
@@ -1025,8 +1026,10 @@ Proof.
       { rewrite Hb_norm_sq. unfold A. ring. }
       transitivity ((b_norm * b_norm * b_norm * b_norm) / 4 - (b_norm * b_norm) * cr).
       { exact Henv_eq. }
-      { (* repeat rewrite has the same pattern matching issues as before *)
-        admit. }
+      { rewrite Hb_norm_eq_A.
+        replace (A * b_norm * b_norm) with (A * A).
+        - reflexivity.
+        - rewrite <- Hb_norm_eq_A. ring. }
     }
 
     (* The quadratic for er is: A·er² + 2bi·ci·er + (ci² - br²·z²) = 0 *)
@@ -1126,7 +1129,8 @@ Proof.
     (* From inside envelope condition: ci² < bi⁴/4 - bi²·cr *)
     assert (Henv_strict_bi : ci * ci < (bi * bi * bi * bi) / 4 - (bi * bi) * cr).
     {
-      (* Similar pattern matching issues as before - use transitivity *)
+      (* Similar pattern matching issues as before *)
+      (* This requires expanding Cnorm and simplifying sqrt terms *)
       admit.
     }
 
