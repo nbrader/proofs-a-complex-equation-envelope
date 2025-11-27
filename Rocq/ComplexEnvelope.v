@@ -917,106 +917,53 @@ Proof.
 
     set (ei_sq := z_sq - er * er).
 
-    (* Show ei_sq ≥ 0 *)
-    assert (Hei_sq_nonneg : 0 <= ei_sq).
+    (* Specialization of the envelope equation to br = 0 *)
+    assert (Henv_br0 : ci * ci = bi * bi * bi * bi / 4 - bi * bi * cr).
     {
-      (* On the envelope, ei_sq = bi²/4 by the tangency condition *)
-      (* First derive the envelope equation for this case *)
-      assert (Henv_br0 : ci * ci = bi * bi * bi * bi / 4 - bi * bi * cr).
-      {
-        (* Henv_eq has Cnorm (0, bi) terms, which equal b_norm after br substitution *)
-        (* First, simplify Cnorm (0, bi) to sqrt(bi*bi) *)
-        assert (Hcnorm_bi : Cnorm (0, bi) = sqrt (bi * bi)).
-        { unfold Cnorm, Cnorm_sq; simpl. f_equal. ring. }
-        assert (Hsqrt_sq : sqrt (bi * bi) * sqrt (bi * bi) = bi * bi).
-        { apply sqrt_sqrt. apply Rle_0_sqr. }
-        (* Rewrite Henv_eq using these *)
-        rewrite Hcnorm_bi in Henv_eq.
-        replace (sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi))
-          with (bi * bi * bi * bi) in Henv_eq.
-        2: { replace (sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi))
-               with ((sqrt (bi * bi) * sqrt (bi * bi)) * (sqrt (bi * bi) * sqrt (bi * bi))) by ring.
-             rewrite Hsqrt_sq. ring. }
-        rewrite Hsqrt_sq in Henv_eq.
-        exact Henv_eq.
-      }
-      (* We just need to show 0 <= ei_sq *)
-      unfold ei_sq, z_sq, er.
-      rewrite Hb_norm_sq.
-      simpl.
-      replace (0 * 0 + bi * bi) with (bi * bi) by ring.
-      (* Goal: 0 <= bi²/2 - cr - ((-ci/bi) * (-ci/bi)) *)
-      (* Equivalently: ((-ci/bi) * (-ci/bi)) <= bi²/2 - cr *)
-      (* Which is: ci²/bi² <= bi²/2 - cr *)
-      (* This should follow from the envelope condition *)
-      (* For now, we'll admit this algebraic manipulation *)
-      admit.
+      assert (Hcnorm_bi : Cnorm (0, bi) = sqrt (bi * bi)).
+      { unfold Cnorm, Cnorm_sq; simpl. f_equal. ring. }
+      assert (Hsqrt_sq : sqrt (bi * bi) * sqrt (bi * bi) = bi * bi).
+      { apply sqrt_sqrt. apply Rle_0_sqr. }
+      rewrite Hcnorm_bi in Henv_eq.
+      replace (sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi))
+        with (bi * bi * bi * bi) in Henv_eq.
+      2: { replace (sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi))
+             with ((sqrt (bi * bi) * sqrt (bi * bi)) * (sqrt (bi * bi) * sqrt (bi * bi))) by ring.
+           rewrite Hsqrt_sq. ring. }
+      rewrite Hsqrt_sq in Henv_eq.
+      exact Henv_eq.
     }
 
-    set (ei := sqrt ei_sq).
+    (* Show ei_sq ≥ 0 *)
+    assert (Hei_sq_value : ei_sq = bi * bi / 4).
+    {
+      assert (Hei_sq_expanded : ei_sq = bi * bi / 2 - cr - ci * ci / (bi * bi)).
+      {
+        unfold ei_sq, z_sq, er.
+        rewrite Hb_norm_sq.
+        simpl.
+        replace (0 * 0 + bi * bi) with (bi * bi) by ring.
+        unfold Rdiv.
+        field; exact Hbi_nonzero.
+      }
+      assert (Hci_over_bi_sq : ci * ci / (bi * bi) = bi * bi / 4 - cr).
+      { rewrite Henv_br0. field; exact Hbi_nonzero. }
+      rewrite Hei_sq_expanded, Hci_over_bi_sq.
+      nra.
+    }
+    assert (Hei_sq_nonneg : 0 <= ei_sq).
+    { rewrite Hei_sq_value. apply Rmult_le_pos; [apply Rle_0_sqr | lra]. }
+
+    (* Tangency forces ei to be the double root -bi/2 *)
+    set (ei := - bi / 2).
     exists er, ei.
 
     split.
     + (* Real part: er² + ei² + 0·er + bi·ei + cr = 0 *)
-      unfold ei, ei_sq, er.
-      rewrite sqrt_sqrt by exact Hei_sq_nonneg.
-      (* The algebra works out by construction *)
-      (* We need to show: er² + (z_sq - er²) + bi·sqrt(z_sq - er²) + cr = 0 *)
-      (* This simplifies to: z_sq + bi·sqrt(z_sq - er²) + cr = 0 *)
-      unfold z_sq.
-      rewrite Hb_norm_sq.
-      simpl.
-      replace (0 * 0 + bi * bi) with (bi * bi) by ring.
-      (* We need: bi²/2 - cr + bi·sqrt(bi²/2 - cr - er²) + cr = 0 *)
-      (* This simplifies to: bi²/2 + bi·sqrt(bi²/2 - cr - er²) = 0 *)
-      (* But we need to be more careful about what ei actually is *)
-
-      (* From envelope: ci² = bi⁴/4 - bi²·cr *)
-      (* From this: bi²·cr = bi⁴/4 - ci² *)
-      (* So: bi²/2 - cr = (bi⁴/2 - 2·bi²·cr)/(2·bi²) = (bi⁴/2 - 2·(bi⁴/4 - ci²))/(2·bi²) *)
-      (*                 = (bi⁴/2 - bi⁴/2 + 2·ci²)/(2·bi²) = 2·ci²/(2·bi²) = ci²/bi² *)
-
-      (* Actually, let's use a different approach. We're solving: *)
-      (* er² + ei² + bi·ei + cr = 0 (with br = 0) *)
-      (* This is: ei² + bi·ei = -(er² + cr) *)
-      (* Completing the square: (ei + bi/2)² = bi²/4 - (er² + cr) *)
-
-      (* From envelope: ci² = bi⁴/4 - bi²·cr *)
-      (* With er = -ci/bi: er² = ci²/bi² *)
-      (* So: er² + cr = ci²/bi² + cr = (ci² + bi²·cr)/bi² *)
-      (*               = (ci² + bi²·cr)/bi² = (bi⁴/4 - bi²·cr + bi²·cr)/bi² *)
-      (* Wait, that's not right. Let me recalculate. *)
-
-      (* Let me use the envelope equation directly *)
-      assert (Henv_use : ci * ci =
-        (bi * bi * bi * bi) / 4 - (bi * bi) * cr).
-      {
-        (* Simplify Henv_eq by expanding b_norm = Cnorm (0, bi) *)
-        unfold b_norm in Henv_eq.
-        unfold Cnorm, Cnorm_sq in Henv_eq; simpl in Henv_eq.
-        (* Simplify sqrt expressions using sqrt x * sqrt x = x *)
-        assert (Hbi_sq : 0 * 0 + bi * bi = bi * bi) by ring.
-        assert (Hsqrt_prop : forall x, 0 <= x -> sqrt x * sqrt x = x).
-        { intros. apply sqrt_sqrt. exact H. }
-        assert (Hbi_bi_nonneg : 0 <= bi * bi) by apply Rle_0_sqr.
-        repeat rewrite Hbi_sq in Henv_eq.
-        setoid_rewrite (Hsqrt_prop (bi * bi) Hbi_bi_nonneg) in Henv_eq.
-        (* Now Henv_eq is: ci*ci = bi*bi * sqrt(bi*bi) * sqrt(bi*bi) / 4 - bi*bi * cr *)
-        (* Simplify using ring, which should handle sqrt(bi*bi) * sqrt(bi*bi) = bi*bi *)
-        transitivity (bi * bi * sqrt (bi * bi) * sqrt (bi * bi) / 4 - bi * bi * cr).
-        { exact Henv_eq. }
-        { assert (Hsqrt_simp : sqrt (bi * bi) * sqrt (bi * bi) = bi * bi).
-          { apply Hsqrt_prop. exact Hbi_bi_nonneg. }
-          assert (Hprod_eq : bi * bi * sqrt (bi * bi) * sqrt (bi * bi) = bi * bi * bi * bi).
-          { transitivity (bi * bi * (sqrt (bi * bi) * sqrt (bi * bi))).
-            - rewrite Rmult_assoc. rewrite Rmult_assoc. reflexivity.
-            - rewrite Hsqrt_simp. rewrite <- Rmult_assoc. reflexivity. }
-          rewrite Hprod_eq. reflexivity. }
-      }
-
-      (* The algebra works out by the envelope condition *)
-      (* On the envelope, ei_sq = 0, so ei = 0, and the equation holds *)
-      admit.
+      unfold ei, er.
+      replace ((- ci / bi) * (- ci / bi)) with (ci * ci / (bi * bi)) by (field; exact Hbi_nonzero).
+      rewrite Henv_br0.
+      field; exact Hbi_nonzero.
 
     + (* Imaginary part: bi·er - 0·ei + ci = 0 *)
       unfold er. field. exact Hbi_nonzero.
@@ -1073,7 +1020,7 @@ Proof.
     (* of the quadratic in er must be zero, giving a unique solution. *)
 
     (* For cleaner algebra, define er directly from the quadratic solution *)
-    set (er := - (bi * ci) / A).
+    set (er := - br / 2 - (bi * ci) / A).
 
     (* Now compute ei from the linear constraint *)
     set (ei := (bi * er + ci) / br).
@@ -1081,15 +1028,26 @@ Proof.
     exists er, ei.
     split.
     + (* Real part: er² + ei² + br·er + bi·ei + cr = 0 *)
-      (* The construction ensures this holds by the envelope condition *)
-      admit.
+      assert (HA_neq : A <> 0) by lra.
+      assert (Hei_simpl : ei = ci * br / A - bi / 2).
+      { unfold ei, er, A. field; split; [exact Hb_sq_nonzero | exact Hbr_nonzero]. }
+      assert (Hsum_linear : br * er + bi * ei = - A / 2).
+      { unfold er. rewrite Hei_simpl. unfold A. field; exact HA_neq. }
+      assert (Hsum_sq : er * er + ei * ei = A / 4 + (ci * ci) / A).
+      { unfold er. rewrite Hei_simpl. unfold A. field; exact HA_neq. }
+      assert (Hgroup :
+        er * er + ei * ei + br * er + bi * ei + cr =
+        (er * er + ei * ei) + (br * er + bi * ei) + cr) by ring.
+      rewrite Hgroup, Hsum_sq, Hsum_linear, Henv_A.
+      replace ((A * A / 4 - A * cr) / A) with (A / 4 - cr) by (field; exact HA_neq).
+      nra.
 
     + (* Imaginary part: bi·er - br·ei + ci = 0 *)
       (* Substitute ei = (bi·er + ci)/br and simplify *)
       unfold ei.
-      field.
-      exact Hbr_nonzero.
-Admitted.
+      replace (br * ((bi * er + ci) / br)) with (bi * er + ci) by (field; exact Hbr_nonzero).
+      ring.
+Qed.
 
 (*
   For points strictly inside the envelope, solutions also exist.
@@ -1216,8 +1174,15 @@ Proof.
 
     split.
     + (* Real part: er² + ei² + 0·er + bi·ei + cr = 0 *)
-      (* Complex algebraic manipulation with completing the square *)
-      admit.
+      unfold ei.
+      set (s := sqrt disc).
+      assert (Hs_sq : s * s = disc).
+      { unfold s. apply sqrt_sqrt. lra. }
+      replace (er * er + (- bi / 2 + s) * (- bi / 2 + s) + bi * (- bi / 2 + s) + cr)
+        with (er * er + s * s - (bi * bi) / 4 + cr) by nra.
+      replace (s * s) with disc by (symmetry; exact Hs_sq).
+      subst disc.
+      nra.
 
     + (* Imaginary part: bi·er - 0·ei + ci = 0 *)
       unfold er. field. exact Hbi_nonzero.
@@ -1267,8 +1232,20 @@ Proof.
     set (z_sq := A / 2 - cr).
     assert (Hz_sq_pos : 0 < z_sq).
     {
-      (* For inside envelope, there exist multiple z values that work *)
-      admit.
+      assert (HA_neq : A <> 0) by lra.
+      assert (Hcr_lt : cr < A / 4 - ci * ci / A).
+      {
+        assert (Hscaled : (/ A) * (ci * ci) < (/ A) * (A * A / 4 - A * cr)).
+        { apply Rmult_lt_compat_l; [apply Rinv_0_lt_compat; lra | exact Henv_A_strict]. }
+        replace ((/ A) * (A * A / 4 - A * cr)) with (A / 4 - cr) in Hscaled by (field; exact HA_neq).
+        lra.
+      }
+      assert (Hlower : A / 2 - cr > A / 4 + ci * ci / A) by lra.
+      assert (Hci_over_A_nonneg : 0 <= ci * ci / A).
+      { apply Rmult_le_pos; [apply Rle_0_sqr | apply Rlt_le, Rinv_0_lt_compat; lra]. }
+      assert (HA_quarter_pos : 0 < A / 4) by lra.
+      unfold z_sq.
+      lra.
     }
 
     set (er := - (bi * ci) / A).
