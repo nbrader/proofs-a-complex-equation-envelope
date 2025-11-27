@@ -1184,8 +1184,30 @@ Proof.
       replace ((- ci / bi) * (- ci / bi)) with (ci * ci / (bi * bi)) by
         (unfold Rdiv; field; exact Hbi_nonzero).
       (* Show: bi²/4 - ci²/bi² - cr > 0 *)
-      (* Follows from the strict inside envelope condition *)
-      admit.
+      (* From Henv_strict_bi: ci² < bi⁴/4 - bi²·cr *)
+      (* Dividing by bi²: ci²/bi² < bi²/4 - cr *)
+      (* Rearranging: bi²/4 - ci²/bi² - cr > 0 *)
+      assert (Hbi_sq_pos : 0 < bi * bi).
+      { apply Rsqr_pos_lt. exact Hbi_nonzero. }
+      unfold Rdiv in *.
+      assert (Hbi_sq_neq : bi * bi <> 0) by lra.
+      (* Use Henv_strict_bi to derive the inequality *)
+      assert (Hineq : ci * ci * / (bi * bi) < bi * bi * / 4 - cr).
+      {
+        (* From Henv_strict_bi: ci*ci < bi*bi*bi*bi / 4 - bi*bi*cr *)
+        (* Multiply both sides by 1/(bi*bi) *)
+        assert (Hstep : ci * ci * / (bi * bi) < (bi * bi * bi * bi * / 4 - bi * bi * cr) * / (bi * bi)).
+        {
+          apply Rmult_lt_compat_r.
+          - apply Rinv_0_lt_compat. exact Hbi_sq_pos.
+          - exact Henv_strict_bi.
+        }
+        assert (Hsimp : (bi * bi * bi * bi * / 4 - bi * bi * cr) * / (bi * bi) = bi * bi * / 4 - cr).
+        { field. exact Hbi_nonzero. }
+        rewrite Hsimp in Hstep.
+        exact Hstep.
+      }
+      lra.
     }
 
     (* Choose one of the two solutions for ei *)
