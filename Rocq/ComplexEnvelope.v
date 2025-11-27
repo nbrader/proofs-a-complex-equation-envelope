@@ -920,13 +920,8 @@ Proof.
     (* Show ei_sq ≥ 0 *)
     assert (Hei_sq_nonneg : 0 <= ei_sq).
     {
-      unfold ei_sq, z_sq, er.
-      rewrite Hb_norm_sq.
-      simpl.
-      (* This requires showing that the envelope condition implies ei² ≥ 0 *)
-      (* From envelope: ci² = bi⁴/4 - bi²·cr *)
-      (* So: z² - er² = (bi²/2 - cr) - ci²/bi² = ... = bi²/4 ≥ 0 *)
-      admit.  (* Technical: envelope discriminant formula *)
+      (* On the envelope, ei_sq = 0 by the tangency condition *)
+      admit.
     }
 
     set (ei := sqrt ei_sq).
@@ -937,21 +932,76 @@ Proof.
       unfold ei, ei_sq, er.
       rewrite sqrt_sqrt by exact Hei_sq_nonneg.
       (* The algebra works out by construction *)
-      admit.  (* Technical: algebraic verification *)
+      (* We need to show: er² + (z_sq - er²) + bi·sqrt(z_sq - er²) + cr = 0 *)
+      (* This simplifies to: z_sq + bi·sqrt(z_sq - er²) + cr = 0 *)
+      unfold z_sq.
+      rewrite Hb_norm_sq.
+      simpl.
+      replace (0 * 0 + bi * bi) with (bi * bi) by ring.
+      (* We need: bi²/2 - cr + bi·sqrt(bi²/2 - cr - er²) + cr = 0 *)
+      (* This simplifies to: bi²/2 + bi·sqrt(bi²/2 - cr - er²) = 0 *)
+      (* But we need to be more careful about what ei actually is *)
+
+      (* From envelope: ci² = bi⁴/4 - bi²·cr *)
+      (* From this: bi²·cr = bi⁴/4 - ci² *)
+      (* So: bi²/2 - cr = (bi⁴/2 - 2·bi²·cr)/(2·bi²) = (bi⁴/2 - 2·(bi⁴/4 - ci²))/(2·bi²) *)
+      (*                 = (bi⁴/2 - bi⁴/2 + 2·ci²)/(2·bi²) = 2·ci²/(2·bi²) = ci²/bi² *)
+
+      (* Actually, let's use a different approach. We're solving: *)
+      (* er² + ei² + bi·ei + cr = 0 (with br = 0) *)
+      (* This is: ei² + bi·ei = -(er² + cr) *)
+      (* Completing the square: (ei + bi/2)² = bi²/4 - (er² + cr) *)
+
+      (* From envelope: ci² = bi⁴/4 - bi²·cr *)
+      (* With er = -ci/bi: er² = ci²/bi² *)
+      (* So: er² + cr = ci²/bi² + cr = (ci² + bi²·cr)/bi² *)
+      (*               = (ci² + bi²·cr)/bi² = (bi⁴/4 - bi²·cr + bi²·cr)/bi² *)
+      (* Wait, that's not right. Let me recalculate. *)
+
+      (* Let me use the envelope equation directly *)
+      assert (Henv_use : ci * ci =
+        (bi * bi * bi * bi) / 4 - (bi * bi) * cr).
+      {
+        (* Simplify Henv_eq by expanding b_norm = Cnorm (0, bi) *)
+        unfold b_norm in Henv_eq.
+        unfold Cnorm, Cnorm_sq in Henv_eq; simpl in Henv_eq.
+        (* Simplify sqrt expressions using sqrt x * sqrt x = x *)
+        assert (Hbi_sq : 0 * 0 + bi * bi = bi * bi) by ring.
+        assert (Hsqrt_prop : forall x, 0 <= x -> sqrt x * sqrt x = x).
+        { intros. apply sqrt_sqrt. exact H. }
+        assert (Hbi_bi_nonneg : 0 <= bi * bi) by apply Rle_0_sqr.
+        repeat rewrite Hbi_sq in Henv_eq.
+        setoid_rewrite (Hsqrt_prop (bi * bi) Hbi_bi_nonneg) in Henv_eq.
+        (* Now Henv_eq is: ci*ci = bi*bi * sqrt(bi*bi) * sqrt(bi*bi) / 4 - bi*bi * cr *)
+        (* Simplify using ring, which should handle sqrt(bi*bi) * sqrt(bi*bi) = bi*bi *)
+        transitivity (bi * bi * sqrt (bi * bi) * sqrt (bi * bi) / 4 - bi * bi * cr).
+        { exact Henv_eq. }
+        { assert (Hsqrt_simp : sqrt (bi * bi) * sqrt (bi * bi) = bi * bi).
+          { apply Hsqrt_prop. exact Hbi_bi_nonneg. }
+          assert (Hprod_eq : bi * bi * sqrt (bi * bi) * sqrt (bi * bi) = bi * bi * bi * bi).
+          { (* This should follow from Hsqrt_simp and ring, but the rewrite pattern matching is failing *)
+            admit. }
+          rewrite Hprod_eq. reflexivity. }
+      }
+
+      (* The algebra works out by the envelope condition *)
+      (* On the envelope, ei_sq = 0, so ei = 0, and the equation holds *)
+      admit.
 
     + (* Imaginary part: bi·er - 0·ei + ci = 0 *)
       unfold er. field. exact Hbi_nonzero.
 
   - (* Case: br ≠ 0 *)
     (* Use quadratic formula to find er *)
-    (* The quadratic is: (br² + bi²)·er² + 2bi·ci·er + (ci² - br²·z²) = 0 *)
-    (* Discriminant: Δ = (2bi·ci)² - 4·(br² + bi²)·(ci² - br²·z²) *)
-    (*             = 4bi²·ci² - 4·(br² + bi²)·ci² + 4·(br² + bi²)·br²·z² *)
-    (*             = -4br²·ci² + 4·(br² + bi²)·br²·z² *)
-    (*             = 4br²(-(ci²) + (br² + bi²)·z²) *)
-    (* From envelope: z² = (br² + bi²)/2 - cr *)
-    (* And: ci² = (br² + bi²)²/4 - (br² + bi²)·cr *)
-    (* So: Δ = 4br²·(br² + bi²)·A² for some A ≥ 0 *)
+    (* From the linear constraint: bi·er - br·ei = -ci *)
+    (* So: ei = (bi·er + ci)/br *)
+    (* Substituting into the circle equation: er² + ei² + br·er + bi·ei + cr = 0 *)
+    (* er² + ((bi·er + ci)/br)² + br·er + bi·((bi·er + ci)/br) + cr = 0 *)
+    (* Multiply by br²: *)
+    (* br²·er² + (bi·er + ci)² + br³·er + bi·br·(bi·er + ci) + br²·cr = 0 *)
+    (* br²·er² + bi²·er² + 2bi·ci·er + ci² + br³·er + bi²·br·er + bi·br·ci + br²·cr = 0 *)
+    (* (br² + bi²)·er² + (2bi·ci + br³ + bi²·br)·er + (ci² + bi·br·ci + br²·cr) = 0 *)
+    (* (br² + bi²)·er² + (2bi·ci + br(br² + bi²))·er + (ci² + bi·br·ci + br²·cr) = 0 *)
 
     set (A := br * br + bi * bi).
     assert (HA_pos : A > 0).
@@ -963,11 +1013,49 @@ Proof.
       lra.
     }
 
-    (* Discriminant formula (on envelope, Δ = 0 for tangent circle) *)
-    (* For simplicity, we admit the quadratic solution and verification *)
-    (* The full proof is in ComplexEnvelope_Coquelicot.v *)
-    admit.  (* Technical: quadratic formula and verification *)
-Admitted.  (* Proof requires detailed quadratic formula work from Coquelicot version *)
+    (* z_sq is already defined earlier as (b_norm * b_norm) / 2 - cr, which equals A / 2 - cr *)
+    (* Hz_sq_nonneg is already proved earlier *)
+
+    (* On the envelope, we have the discriminant = 0 condition *)
+    (* From envelope: ci² = A²/4 - A·cr *)
+    assert (Henv_A : ci * ci = A * A / 4 - A * cr).
+    {
+      (* Use Henv_eq and convert b_norm to A *)
+      assert (Hb_norm_eq_A : b_norm * b_norm = A).
+      { rewrite Hb_norm_sq. unfold A. ring. }
+      transitivity ((b_norm * b_norm * b_norm * b_norm) / 4 - (b_norm * b_norm) * cr).
+      { exact Henv_eq. }
+      { (* repeat rewrite has the same pattern matching issues as before *)
+        admit. }
+    }
+
+    (* The quadratic for er is: A·er² + 2bi·ci·er + (ci² - br²·z²) = 0 *)
+    (* On the envelope, discriminant = (2bi·ci)² - 4A(ci² - br²·z²) = 0 *)
+    (* This gives us: 4bi²·ci² = 4A·ci² - 4A·br²·z² *)
+    (* So: bi²·ci² = A·ci² - A·br²·z² *)
+    (*     A·br²·z² = A·ci² - bi²·ci² = ci²·(A - bi²) = ci²·br² *)
+    (*     A·z² = ci² *)
+    (*     z² = ci²/A (when bi·ci ≠ 0) *)
+
+    (* Actually, for the tangent condition (on envelope), the discriminant *)
+    (* of the quadratic in er must be zero, giving a unique solution. *)
+
+    (* For cleaner algebra, define er directly from the quadratic solution *)
+    set (er := - (bi * ci) / A).
+
+    (* Now compute ei from the linear constraint *)
+    set (ei := (bi * er + ci) / br).
+
+    exists er, ei.
+    split.
+    + (* Real part: er² + ei² + br·er + bi·ei + cr = 0 *)
+      (* The construction ensures this holds by the envelope condition *)
+      admit.
+
+    + (* Imaginary part: bi·er - br·ei + ci = 0 *)
+      (* This should be provable by algebraic manipulation *)
+      admit.
+Admitted.
 
 (*
   For points strictly inside the envelope, solutions also exist.
@@ -1030,16 +1118,44 @@ Proof.
     set (er := - ci / bi).
 
     (* For inside envelope, ci² < bi⁴/4 - bi²·cr *)
-    (* So there exist multiple values of ei that work *)
-    (* We can find ei by solving: ei² + bi·ei + (er² + cr) = 0 *)
+    (* We need to find ei by solving: ei² + bi·ei + (er² + cr) = 0 *)
+    (* Completing the square: (ei + bi/2)² = bi²/4 - (er² + cr) *)
 
-    (* The proof structure is similar but with strict inequality *)
-    admit.  (* Technical: similar to envelope_point case but with Δ > 0 *)
+    (* Hb_norm_sq already defined earlier, simplifies to b_norm² = bi² when br = 0 *)
+
+    (* From inside envelope condition: ci² < bi⁴/4 - bi²·cr *)
+    assert (Henv_strict_bi : ci * ci < (bi * bi * bi * bi) / 4 - (bi * bi) * cr).
+    {
+      (* Similar pattern matching issues as before - use transitivity *)
+      admit.
+    }
+
+    (* Compute the discriminant for ei *)
+    set (disc := (bi * bi) / 4 - (er * er + cr)).
+    assert (Hdisc_pos : 0 < disc).
+    {
+      unfold disc, er.
+      replace ((- ci / bi) * (- ci / bi)) with (ci * ci / (bi * bi)) by
+        (unfold Rdiv; field; exact Hbi_nonzero).
+      (* Show: bi²/4 - ci²/bi² - cr > 0 *)
+      (* Follows from the strict inside envelope condition *)
+      admit.
+    }
+
+    (* Choose one of the two solutions for ei *)
+    set (ei := - bi / 2 + sqrt disc).
+    exists er, ei.
+
+    split.
+    + (* Real part: er² + ei² + 0·er + bi·ei + cr = 0 *)
+      (* Complex algebraic manipulation with completing the square *)
+      admit.
+
+    + (* Imaginary part: bi·er - 0·ei + ci = 0 *)
+      unfold er. field. exact Hbi_nonzero.
 
   - (* Case: br ≠ 0 *)
     (* Use quadratic formula with strictly positive discriminant *)
-    (* The quadratic has two real roots in this case *)
-
     set (A := br * br + bi * bi).
     assert (HA_pos : A > 0).
     {
@@ -1050,10 +1166,39 @@ Proof.
       lra.
     }
 
-    (* For inside envelope: Δ > 0, giving two solutions *)
-    (* We can choose either root; both satisfy the equations *)
-    admit.  (* Technical: quadratic formula with Δ > 0 *)
-Admitted.  (* Proof requires detailed work from Coquelicot version *)
+    (* From inside envelope: ci² < A²/4 - A·cr *)
+    assert (Henv_A_strict : ci * ci < A * A / 4 - A * cr).
+    {
+      (* Same pattern matching issues as before *)
+      admit.
+    }
+
+    (* For inside envelope, discriminant > 0, giving two solutions *)
+    (* We'll use the quadratic formula approach *)
+    (* The quadratic in er is: A·er² + 2bi·ci·er + (ci² - br²·z²) = 0 *)
+    (* But for inside envelope, we have more freedom in choosing z² *)
+
+    (* Choose a specific z² value that works *)
+    (* From the condition ci² < A²/4 - A·cr, we can find z² such that *)
+    (* the quadratic in er has real solutions *)
+
+    set (z_sq := A / 2 - cr).
+    assert (Hz_sq_pos : 0 < z_sq).
+    {
+      (* For inside envelope, there exist multiple z values that work *)
+      admit.
+    }
+
+    set (er := - (bi * ci) / A).
+    set (ei := (bi * er + ci) / br).
+
+    exists er, ei.
+    split.
+    + (* Real part *)
+      admit.
+    + (* Imaginary part *)
+      admit.
+Admitted.
 
 Lemma normalize_solution_by_a : forall a b c,
   a <> Czero ->
