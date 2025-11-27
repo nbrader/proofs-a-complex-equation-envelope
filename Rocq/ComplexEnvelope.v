@@ -920,7 +920,36 @@ Proof.
     (* Show ei_sq ≥ 0 *)
     assert (Hei_sq_nonneg : 0 <= ei_sq).
     {
-      (* On the envelope, ei_sq = 0 by the tangency condition *)
+      (* On the envelope, ei_sq = bi²/4 by the tangency condition *)
+      (* First derive the envelope equation for this case *)
+      assert (Henv_br0 : ci * ci = bi * bi * bi * bi / 4 - bi * bi * cr).
+      {
+        (* Henv_eq has Cnorm (0, bi) terms, which equal b_norm after br substitution *)
+        (* First, simplify Cnorm (0, bi) to sqrt(bi*bi) *)
+        assert (Hcnorm_bi : Cnorm (0, bi) = sqrt (bi * bi)).
+        { unfold Cnorm, Cnorm_sq; simpl. f_equal. ring. }
+        assert (Hsqrt_sq : sqrt (bi * bi) * sqrt (bi * bi) = bi * bi).
+        { apply sqrt_sqrt. apply Rle_0_sqr. }
+        (* Rewrite Henv_eq using these *)
+        rewrite Hcnorm_bi in Henv_eq.
+        replace (sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi))
+          with (bi * bi * bi * bi) in Henv_eq.
+        2: { replace (sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi))
+               with ((sqrt (bi * bi) * sqrt (bi * bi)) * (sqrt (bi * bi) * sqrt (bi * bi))) by ring.
+             rewrite Hsqrt_sq. ring. }
+        rewrite Hsqrt_sq in Henv_eq.
+        exact Henv_eq.
+      }
+      (* We just need to show 0 <= ei_sq *)
+      unfold ei_sq, z_sq, er.
+      rewrite Hb_norm_sq.
+      simpl.
+      replace (0 * 0 + bi * bi) with (bi * bi) by ring.
+      (* Goal: 0 <= bi²/2 - cr - ((-ci/bi) * (-ci/bi)) *)
+      (* Equivalently: ((-ci/bi) * (-ci/bi)) <= bi²/2 - cr *)
+      (* Which is: ci²/bi² <= bi²/2 - cr *)
+      (* This should follow from the envelope condition *)
+      (* For now, we'll admit this algebraic manipulation *)
       admit.
     }
 
@@ -1056,8 +1085,10 @@ Proof.
       admit.
 
     + (* Imaginary part: bi·er - br·ei + ci = 0 *)
-      (* This should be provable by algebraic manipulation *)
-      admit.
+      (* Substitute ei = (bi·er + ci)/br and simplify *)
+      unfold ei.
+      field.
+      exact Hbr_nonzero.
 Admitted.
 
 (*
@@ -1200,8 +1231,11 @@ Proof.
     split.
     + (* Real part *)
       admit.
-    + (* Imaginary part *)
-      admit.
+    + (* Imaginary part: bi·er - br·ei + ci = 0 *)
+      (* Substitute ei = (bi·er + ci)/br and simplify *)
+      unfold ei.
+      field.
+      exact Hbr_nonzero.
 Admitted.
 
 Lemma normalize_solution_by_a : forall a b c,
