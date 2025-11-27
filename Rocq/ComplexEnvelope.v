@@ -1160,9 +1160,20 @@ Proof.
     (* From inside envelope condition: ci² < bi⁴/4 - bi²·cr *)
     assert (Henv_strict_bi : ci * ci < (bi * bi * bi * bi) / 4 - (bi * bi) * cr).
     {
-      (* Similar pattern matching issues as before *)
-      (* This requires expanding Cnorm and simplifying sqrt terms *)
-      admit.
+      (* Simplify Henv_strict by expanding Cnorm (0, bi) to sqrt(bi*bi) *)
+      assert (Hcnorm_bi : Cnorm (0, bi) = sqrt (bi * bi)).
+      { unfold Cnorm, Cnorm_sq; simpl. f_equal. ring. }
+      assert (Hsqrt_sq : sqrt (bi * bi) * sqrt (bi * bi) = bi * bi).
+      { apply sqrt_sqrt. apply Rle_0_sqr. }
+      (* Rewrite Henv_strict using these *)
+      rewrite Hcnorm_bi in Henv_strict.
+      replace (sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi))
+        with (bi * bi * bi * bi) in Henv_strict.
+      2: { replace (sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi) * sqrt (bi * bi))
+             with ((sqrt (bi * bi) * sqrt (bi * bi)) * (sqrt (bi * bi) * sqrt (bi * bi))) by ring.
+           rewrite Hsqrt_sq. ring. }
+      rewrite Hsqrt_sq in Henv_strict.
+      exact Henv_strict.
     }
 
     (* Compute the discriminant for ei *)
@@ -1204,8 +1215,22 @@ Proof.
     (* From inside envelope: ci² < A²/4 - A·cr *)
     assert (Henv_A_strict : ci * ci < A * A / 4 - A * cr).
     {
-      (* Same pattern matching issues as before *)
-      admit.
+      (* Substitute b_norm = Cnorm (br, bi) and convert to A *)
+      assert (Hb_norm_eq_A : b_norm * b_norm = A).
+      { rewrite Hb_norm_sq. unfold A. ring. }
+      (* Henv_strict has Cnorm (br, bi), which equals b_norm by definition *)
+      unfold b_norm in Henv_strict.
+      (* Now convert powers of Cnorm (br, bi) to powers of (br² + bi²) = A *)
+      assert (Hcnorm_sq : Cnorm (br, bi) * Cnorm (br, bi) = A).
+      { unfold Cnorm, Cnorm_sq. simpl.
+        rewrite sqrt_sqrt; [unfold A; ring | apply Rplus_le_le_0_compat; apply Rle_0_sqr]. }
+      assert (Hcnorm_4 : Cnorm (br, bi) * Cnorm (br, bi) * Cnorm (br, bi) * Cnorm (br, bi) = A * A).
+      { replace (Cnorm (br, bi) * Cnorm (br, bi) * Cnorm (br, bi) * Cnorm (br, bi))
+          with ((Cnorm (br, bi) * Cnorm (br, bi)) * (Cnorm (br, bi) * Cnorm (br, bi))) by ring.
+        rewrite Hcnorm_sq. ring. }
+      rewrite Hcnorm_4 in Henv_strict.
+      rewrite Hcnorm_sq in Henv_strict.
+      exact Henv_strict.
     }
 
     (* For inside envelope, discriminant > 0, giving two solutions *)
