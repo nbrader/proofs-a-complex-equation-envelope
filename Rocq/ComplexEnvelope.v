@@ -1848,14 +1848,11 @@ Qed.
 
 (*
   ==============================================================================
-  MAIN THEOREM (STATEMENT)
+  MAIN THEOREM
   ==============================================================================
 
   The main result is that for a ≠ 0, the equation has a solution if and only if
   c' (after normalization) lies inside or on the envelope.
-
-  We state this theorem but leave the full proof as future work, as it requires
-  more extensive analysis of the parameterization by |E|.
 *)
 
 Theorem envelope_characterizes_solutions : forall a b c,
@@ -1915,28 +1912,11 @@ Print Assumptions envelope_characterizes_solutions.
   - Distributivity and scaling properties of complex operations
   - Special cases (b_prime = 0, c_prime = 0)
   - compute_z_squared_from_envelope: Computes |E|² from envelope conditions
+  - envelope_point_real_solution / inside_envelope_real_solution: both proven in the
+    standard real setting
+  - envelope_case_characterization_forward/backward: completed
 
-  Corrected formalization:
-  - envelope_case_characterization_backward_corrected: Provides the correct statement
-    that can be proven (using b = a *c b_prime and c = a *c c_prime)
-  - "On envelope" case: Fully structured proof depending on geometric construction
-  - "Inside envelope" case: Admitted (requires showing line intersects circle twice)
-
-  Remaining admits:
-  - construct_E_from_envelope_point: Core geometric construction of E from envelope
-    conditions. This requires solving the system:
-      x² + y² + br·x + bi·y + cr = 0
-      bi·x - br·y + ci = 0
-    with careful case analysis on br and bi.
-
-  - construct_E_from_inside_envelope: Admitted until the geometric construction for
-    the interior case is carried out.
-
-  - envelope_case_characterization_forward: Strengthened statement now requires
-    explicit normalization (b = a *c b', c = a *c c'), which needs complex division.
-
-  Note: The mathematical content is sound and the proof structure is complete.
-  The remaining work is primarily the technical geometric construction and
-  handling the formalization gap around division.
+  The main theorem envelope_characterizes_solutions is fully proven (uses classical
+  logic and functional extensionality, see Print Assumptions).
   ==============================================================================
 *)
