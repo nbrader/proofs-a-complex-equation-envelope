@@ -16,10 +16,7 @@
   ==============================================================================
 *)
 
-Require Import Reals.
-Require Import Classical.
-Require Import Lra.
-From Coq Require Import setoid_ring.Field.
+From Stdlib Require Import Reals Classical Lra setoid_ring.Field.
 Open Scope R_scope.
 
 (*
