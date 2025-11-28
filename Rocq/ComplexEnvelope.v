@@ -831,16 +831,9 @@ Proof.
 Qed.
 
 (*
-  To avoid re-deriving the full analytic construction in this file, we assume
-  the following lemma: whenever (br, bi) <> 0 and (cr, ci) sits on the envelope,
-  there exist real coordinates (er, ei) solving the normalized system.
-
-  In the Coquelicot variant (Rocq/ComplexEnvelope_Coquelicot.v), this lemma is
-  proven using analysis: treat |E| as a real parameter, show that the quadratic
-  obtained from the envelope equation has non-negative discriminant, and then
-  apply the Intermediate Value Theorem to obtain a suitable radius.  This axiom
-  is exactly that result; once we port the Coquelicot proof here, we can replace
-  the axiom with the proven lemma and discharge the assumption.
+  To avoid re-deriving the full analytic construction at every use site, we
+  package the existence of real coordinates (er, ei) satisfying the normalized
+  system into the lemmas below.
 *)
 
 (*
@@ -854,8 +847,8 @@ Qed.
   4. Compute ei from linear constraint: bi·er - br·ei + ci = 0
   5. Verify both equations hold
 
-  This proof adapts the geometric construction from ComplexEnvelope_Coquelicot.v
-  to work with the standard library's real number system.
+  This proof follows the geometric construction in the standard library's real
+  number system.
 *)
 Lemma envelope_point_real_solution :
   forall br bi cr ci,
@@ -1069,10 +1062,6 @@ Qed.
   The mathematical intuition is that inside points lie within the region
   swept by circles of varying radii |E|, so there exist (typically two)
   values of |E| for which the equation can be satisfied.
-
-  This axiom is analogous to envelope_point_real_solution but applies
-  to the interior case. In the Coquelicot variant, both cases would be
-  proven using IVT to show that appropriate radii exist.
 *)
 
 (*
@@ -1083,7 +1072,8 @@ Qed.
   discriminant is strictly positive (Δ > 0) instead of zero, giving two
   solutions instead of one tangent point.
 
-  This proof adapts the construction from ComplexEnvelope_Coquelicot.v.
+  This proof mirrors the on-envelope case but uses the strictly positive
+  discriminant to choose one of the two intersections.
 *)
 Lemma inside_envelope_real_solution :
   forall br bi cr ci,
@@ -1107,7 +1097,7 @@ Proof.
 
   (* For inside envelope, we need to find a suitable z² value *)
   (* There exist two radii that work; we can use IVT or choose one explicitly *)
-  (* The approach in Coquelicot uses the quadratic formula with Δ > 0 *)
+  (* The proof uses the quadratic formula with Δ > 0 *)
 
   (* Case analysis: br = 0 or br ≠ 0 *)
   destruct (Req_dec br 0) as [Hbr_zero | Hbr_nonzero].

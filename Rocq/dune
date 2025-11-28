@@ -1,5 +1,5 @@
 (coq.theory
  (name ComplexEnvelope)
  (package coq-complex-envelope)
- (theories Stdlib HB mathcomp.boot Coquelicot)
- (modules ComplexEnvelope_Coquelicot))
+ (theories Stdlib)
+ (modules ComplexEnvelope))

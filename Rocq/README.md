@@ -2,29 +2,11 @@
 
 This directory contains Rocq (formerly Coq) formalizations of the proof for the complex equation envelope problem.
 
-## Two Versions Available
-
-### 1. ComplexEnvelope.v - Custom Implementation
-- **Status:** Foundation complete, geometric construction admitted
-- **Approach:** Custom complex number implementation
-- **Limitation:** Lacks division operator (formalization gap)
-- **Best for:** Understanding the proof structure, educational purposes
-
-### 2. ComplexEnvelope_Coquelicot.v - Coquelicot Library Version ⭐ RECOMMENDED
-- **Status:** Ready to complete (6-9 hours of work remaining)
-- **Approach:** Uses Coquelicot library with full complex division
-- **Advantages:** Proper normalization, field tactics, analysis tools
-- **Best for:** Completing the proofs, production use
-- **Requires:** `opam install coq-coquelicot`
-
-**See [`README_COQUELICOT.md`](README_COQUELICOT.md) for detailed comparison and usage.**
+## Current Version
 
 ## Project Structure
 
-- `ComplexEnvelope.v` - Original with custom complex numbers
-- `ComplexEnvelope_Coquelicot.v` - Version using Coquelicot library ⭐
-- `README_COQUELICOT.md` - Detailed guide for Coquelicot version
-- `GEOMETRIC_CONSTRUCTION.md` - Strategy for completing geometric proofs
+- `ComplexEnvelope.v` - Main proof with custom complex numbers (complete)
 - `_CoqProject` - Coq/Rocq project configuration
 - `dune-project` - Dune project configuration
 - `dune` - Dune build file
