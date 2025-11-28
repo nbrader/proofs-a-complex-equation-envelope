@@ -1050,6 +1050,24 @@ Proof.
 Qed.
 
 (*
+  Algebraic helper: clears denominators when substituting
+  ei = (bi·er + ci)/br into the real equation.
+*)
+Lemma br_scale_real :
+  forall br bi cr ci er,
+    br <> 0 ->
+    br * br * (er * er +
+               ((bi * er + ci) / br) * ((bi * er + ci) / br) +
+               br * er + bi * ((bi * er + ci) / br) + cr) =
+    (br * br + bi * bi) * (er * er) +
+    (2 * bi * ci + br * (br * br + bi * bi)) * er +
+    (ci * ci + bi * br * ci + br * br * cr).
+Proof.
+  intros br bi cr ci er Hbr_nonzero.
+  field; lra.
+Qed.
+
+(*
   For points strictly inside the envelope, solutions also exist.
   The mathematical intuition is that inside points lie within the region
   swept by circles of varying radii |E|, so there exist (typically two)
@@ -1229,38 +1247,62 @@ Proof.
     (* From the condition ci² < A²/4 - A·cr, we can find z² such that *)
     (* the quadratic in er has real solutions *)
 
-    set (z_sq := A / 2 - cr).
-    assert (Hz_sq_pos : 0 < z_sq).
+    set (B := 2 * bi * ci + br * A).
+    set (C := ci * ci + bi * br * ci + br * br * cr).
+    set (disc := B * B - 4 * A * C).
+    assert (Hdisc_pos : 0 < disc).
     {
-      assert (HA_neq : A <> 0) by lra.
-      assert (Hcr_lt : cr < A / 4 - ci * ci / A).
-      {
-        assert (Hscaled : (/ A) * (ci * ci) < (/ A) * (A * A / 4 - A * cr)).
-        { apply Rmult_lt_compat_l; [apply Rinv_0_lt_compat; lra | exact Henv_A_strict]. }
-        replace ((/ A) * (A * A / 4 - A * cr)) with (A / 4 - cr) in Hscaled by (field; exact HA_neq).
-        lra.
-      }
-      assert (Hlower : A / 2 - cr > A / 4 + ci * ci / A) by lra.
-      assert (Hci_over_A_nonneg : 0 <= ci * ci / A).
-      { apply Rmult_le_pos; [apply Rle_0_sqr | apply Rlt_le, Rinv_0_lt_compat; lra]. }
-      assert (HA_quarter_pos : 0 < A / 4) by lra.
-      unfold z_sq.
-      lra.
+      assert (Hdisc_form : disc = br * br * (A * A - 4 * ci * ci - 4 * A * cr)).
+      { unfold disc, B, C, A; ring. }
+      assert (Hinner_pos : 0 < A * A - 4 * ci * ci - 4 * A * cr) by lra.
+      assert (Hbr_sq_pos : 0 < br * br) by (apply Rsqr_pos_lt; exact Hbr_nonzero).
+      rewrite Hdisc_form.
+      nra.
     }
 
-    set (er := - (bi * ci) / A).
+    set (er := (- B + sqrt disc) / (2 * A)).
     set (ei := (bi * er + ci) / br).
 
     exists er, ei.
     split.
-    + (* Real part *)
-      admit.
+    + (* Real part: er² + ei² + br·er + bi·ei + cr = 0 *)
+      assert (Hquad : A * (er * er) + B * er + C = 0).
+      {
+        unfold er.
+        assert (Hden : 2 * A <> 0) by lra.
+        set (X := sqrt disc).
+        assert (Hexpr :
+          A * (((- B + X) / (2 * A)) * ((- B + X) / (2 * A))) +
+          B * ((- B + X) / (2 * A)) + C =
+          (((- B + X) * (- B + X) +
+            2 * B * (- B + X) +
+            4 * A * C) / (4 * A))) by (field; lra).
+        rewrite Hexpr.
+        assert (Hnum_simpl :
+          ((- B + X) * (- B + X) +
+           2 * B * (- B + X) +
+           4 * A * C) / (4 * A) =
+          (X * X - B * B + 4 * A * C) / (4 * A)) by (field; lra).
+        rewrite Hnum_simpl.
+        replace (X * X) with disc by (subst X; rewrite sqrt_sqrt; lra).
+        unfold disc, B, C.
+        replace (B * B - 4 * A * C - B * B + 4 * A * C) with 0 by ring.
+        field; lra.
+      }
+      pose proof (br_scale_real br bi cr ci er Hbr_nonzero) as Hscale.
+      fold A in Hscale. fold B in Hscale. fold C in Hscale.
+      fold ei in Hscale.
+      assert (Hprod : br * br * (er * er + ei * ei + br * er + bi * ei + cr) = 0).
+      { rewrite Hscale, Hquad. ring. }
+      assert (Hprod_eq : br * br * (er * er + ei * ei + br * er + bi * ei + cr) = br * br * 0) by (rewrite Hprod; ring).
+      assert (Hbr_sq_nonzero : br * br <> 0) by nra.
+      apply (Rmult_eq_reg_l (br * br)) in Hprod_eq; [exact Hprod_eq | exact Hbr_sq_nonzero].
     + (* Imaginary part: bi·er - br·ei + ci = 0 *)
       (* Substitute ei = (bi·er + ci)/br and simplify *)
       unfold ei.
       field.
       exact Hbr_nonzero.
-Admitted.
+Qed.
 
 Lemma normalize_solution_by_a : forall a b c,
   a <> Czero ->
